@@ -17,7 +17,7 @@ struct Node {
     int top_or_len;
 };
 
-#define NAME(i) (nodex[i].name)
+#define NAME(i) (nodes[i].name)
 #define LLINK(i) (nodes[i].llink)
 #define RLINK(i) (nodes[i].rlink)
 #define ULINK(i) (nodes[i].ulink)
@@ -29,6 +29,8 @@ struct Node {
 struct XC {
     std::vector<Node> nodes;
     size_t z;  // Index of last spacer node.
+    size_t num_items;
+    size_t num_options;
 
     std::string debug_nodes() {
         std::ostringstream oss;
@@ -67,6 +69,7 @@ struct XC {
             nodes.back().rlink = nodes.size();
             nodes.push_back(n);
         }
+        num_items = header.size();
 
         // I2. [Finish the horizontal list.]
         nodes.back().rlink = 0;
@@ -81,7 +84,9 @@ struct XC {
         size_t p = nodes.size();
         nodes.push_back(Node());  // First spacer
 
+        num_options = 0;
         while(fgets(s, MAX_LINE_SIZE, f) != NULL) {
+            num_options++;
             std::unordered_set<std::string> seen;
             size_t j = 0;
 
@@ -164,10 +169,56 @@ struct XC {
     void solve() {
         // X1. [Initialize.]
         size_t l = 0;
+        std::vector<size_t> x(num_options);
 
-        // X2. [Enter level l.]
-        if (RLINK(0) == 0) {
+        while (true) {
+            // X3. [Choose i.]
+            size_t i = RLINK(0);  // TODO: use MRV heuristic.
+            LOG(2) << "Chose i=" << i << " (" << NAME(i) << ")";
 
+            // X4. [Cover i.]
+            cover(i);
+            x[l] = DLINK(i);
+
+            while (true) {
+                // X5. [Try x_l.]
+                if (x[l] == i) {
+                    // X7. [Backtrack.]
+                    uncover(i);
+                    // X8. [Leave level l.]
+                    if (l == 0) return;
+                    --l;
+                } else {
+                    for(size_t p = x[l] + 1; p != x[l];) {
+                        size_t j = TOP(p);
+                        if (j <= 0) { p = ULINK(p); }
+                        else {
+                            cover(j);
+                            ++p;
+                        }
+                    }
+                    ++l;
+                    // X2. [Enter level l.]
+                    if (RLINK(0) != 0) break; // -> X3
+                    // TODO: visit
+                    LOG(0) << "Solution!";
+                    // X8. [Leave level l.]
+                    if (l == 0) return;
+                    --l;
+                }
+
+                // X6 [Try again.]
+                for(size_t p = x[l] - 1; p != x[l];) {
+                    size_t j = TOP(p);
+                    if (j <= 0) { p = DLINK(p); }
+                    else {
+                        uncover(j);
+                        --p;
+                    }
+                }
+                i = TOP(x[l]);
+                x[l] = DLINK(x[l]);
+            }
         }
     }
 
