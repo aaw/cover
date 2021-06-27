@@ -59,7 +59,6 @@ struct XC {
         int offset = 0, r = 0;
         while (sscanf(s + offset, " %s %n", ss, &r) > 0) {
             offset += r;
-            LOG(0) << "Got " << ss;
             CHECK(header.find(ss) == header.end()) <<
                 "Duplicate item name: " << ss;
             header[ss] = nodes.size();
@@ -127,27 +126,33 @@ struct XC {
     }
 
     void hide(size_t p) {
-        for(size_t q = p + 1; q != p; ++q) {
-            size_t x = TOP(q), u = ULINK(q), d = DLINK(q);
+        for(size_t q = p + 1; q != p;) {
+            int x = TOP(q);
+            size_t u = ULINK(q), d = DLINK(q);
             if (x <= 0) { q = u; continue; } // q was a spacer.
             DLINK(u) = d;
             ULINK(d) = u;
             LEN(x)--;
+            ++q;
         }
     }
 
     void unhide(size_t p) {
-        for(size_t q = p - 1; q != p; --q) {
-            size_t x = TOP(q), u = ULINK(q), d = DLINK(q);
+        for(size_t q = p - 1; q != p;) {
+            int x = TOP(q);
+            size_t u = ULINK(q), d = DLINK(q);
             if (x <= 0) { q = d; continue; } // q was a spacer.
             DLINK(u) = q;
             ULINK(d) = q;
             LEN(x)++;
+            --q;
         }
     }
 
     void cover(size_t i) {
+        LOG(2) << "cover(" << i << ")";
         for (size_t p = DLINK(i); p != i;) {
+            LOG(2) << "hide(" << p << ")";
             hide(p);
             p = DLINK(p);
         }
@@ -166,6 +171,21 @@ struct XC {
         }
     }
 
+    void visit(std::vector<size_t>& x, size_t l) {
+        std::ostringstream oss;
+        oss << "Solution: " << std::endl;
+        for (size_t j = 0; j < l; ++j) {
+            size_t r = x[j];
+            while (TOP(r) >= 0) ++r;
+            oss << "  " << -TOP(r) << ": ";
+            for(size_t p = ULINK(r); TOP(p) > 0; ++p) {
+                oss << NAME(TOP(p)) << " ";
+            }
+            oss << std::endl;
+        }
+        LOG(1) << oss.str();
+    }
+
     void solve() {
         // X1. [Initialize.]
         size_t l = 0;
@@ -182,6 +202,7 @@ struct XC {
 
             while (true) {
                 // X5. [Try x_l.]
+                LOG(2) << "Trying x_" << l << " = " << x[l];
                 if (x[l] == i) {
                     // X7. [Backtrack.]
                     uncover(i);
@@ -190,7 +211,7 @@ struct XC {
                     --l;
                 } else {
                     for(size_t p = x[l] + 1; p != x[l];) {
-                        size_t j = TOP(p);
+                        int j = TOP(p);
                         if (j <= 0) { p = ULINK(p); }
                         else {
                             cover(j);
@@ -200,8 +221,8 @@ struct XC {
                     ++l;
                     // X2. [Enter level l.]
                     if (RLINK(0) != 0) break; // -> X3
-                    // TODO: visit
-                    LOG(0) << "Solution!";
+                    INC(solutions);
+                    visit(x, l);
                     // X8. [Leave level l.]
                     if (l == 0) return;
                     --l;
@@ -209,7 +230,7 @@ struct XC {
 
                 // X6 [Try again.]
                 for(size_t p = x[l] - 1; p != x[l];) {
-                    size_t j = TOP(p);
+                    int j = TOP(p);
                     if (j <= 0) { p = DLINK(p); }
                     else {
                         uncover(j);
