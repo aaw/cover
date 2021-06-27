@@ -193,7 +193,15 @@ struct XC {
 
         while (true) {
             // X3. [Choose i.]
-            size_t i = RLINK(0);  // TODO: use MRV heuristic.
+            int theta = std::numeric_limits<int>::max();
+            size_t i = RLINK(0);
+            for(size_t p = RLINK(0); p != 0; p = RLINK(p)) {
+                if (LEN(p) < theta) {
+                    theta = LEN(p);
+                    i = p;
+                    if (theta == 0) break;
+                }
+            }
             LOG(2) << "Chose i=" << i << " (" << NAME(i) << ")";
 
             // X4. [Cover i.]
