@@ -28,6 +28,7 @@ struct Node {
 
 struct XC {
     std::vector<Node> nodes;
+    size_t z;  // Index of last spacer node.
 
     std::string debug_nodes() {
         std::ostringstream oss;
@@ -113,6 +114,7 @@ struct XC {
             p = p+j+1;
             TOP(p) = -m;
             ULINK(p) = p-j;
+            z = p;
         }
 
         LOG(3) << "After parsing, memory is: " << debug_nodes();
@@ -160,6 +162,13 @@ struct XC {
     }
 
     void solve() {
+        // X1. [Initialize.]
+        size_t l = 0;
+
+        // X2. [Enter level l.]
+        if (RLINK(0) == 0) {
+
+        }
     }
 
 };
