@@ -3,6 +3,9 @@
 #include "flags.h"
 
 #include <string>
+#include <sstream>
+#include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 struct Node {
@@ -11,7 +14,7 @@ struct Node {
     size_t dlink;
     size_t llink;
     size_t rlink;
-    size_t top_or_len;
+    int top_or_len;
 };
 
 #define NAME(i) (nodex[i].name)
@@ -26,23 +29,93 @@ struct Node {
 struct XC {
     std::vector<Node> nodes;
 
+    std::string debug_nodes() {
+        std::ostringstream oss;
+        oss << std::endl;
+        int i = 0;
+        for (const Node& n : nodes) {
+            oss << i << ": { " << n.name << " l: " << n.llink
+                << " r: " << n.rlink << " u: " << n.ulink << " d: " << n.dlink
+                << " t: " << n.top_or_len << " }" << std::endl;
+            ++i;
+        }
+        return oss.str();
+    }
+
     XC(const char* filename) {
         FILE* f = fopen(filename, "r");
         CHECK(f) << "Failed to open file: " << filename;
         char s[MAX_LINE_SIZE];
         char ss[MAX_LINE_SIZE];
+
         // I1. [Read the first line.]
+        std::unordered_map<std::string, size_t> header;
         CHECK(fgets(s, MAX_LINE_SIZE, f) != NULL) <<
             "No header row listing items.";
-        while (sscanf(s, " %s ", ss) > 0) {
+        nodes.push_back(Node());  // Header
+        int offset = 0, r = 0;
+        while (sscanf(s + offset, " %s %n", ss, &r) > 0) {
+            offset += r;
+            LOG(0) << "Got " << ss;
+            CHECK(header.find(ss) == header.end()) <<
+                "Duplicate item name: " << ss;
+            header[ss] = nodes.size();
             Node n;
             n.name = ss;
             n.llink = nodes.size() - 1;
             nodes.back().rlink = nodes.size();
             nodes.push_back(n);
         }
-        // I2. [Finish the horizontal list.]
 
+        // I2. [Finish the horizontal list.]
+        nodes.back().rlink = 0;
+        nodes[0].llink = nodes.size()-1;
+
+        // I3. [Prepare for options.]
+        for (size_t i = 1; i < nodes.size(); ++i) {
+            LEN(i) = 0;
+            ULINK(i) = DLINK(i) = i;
+        }
+        size_t m = 0;
+        size_t p = nodes.size();
+        nodes.push_back(Node());  // First spacer
+
+        while(fgets(s, MAX_LINE_SIZE, f) != NULL) {
+            std::unordered_set<std::string> seen;
+            size_t j = 0;
+
+            int offset = 0, r = 0;
+            while (sscanf(s + offset, " %s %n", ss, &r) > 0) {
+                offset += r;
+                ++j;
+                size_t i = header[ss];
+                CHECK(i > 0) << "Item " << ss << " not in header";
+                CHECK(seen.find(ss) == seen.end()) <<
+                    "Duplicate item " << ss;
+                seen.insert(ss);
+                LEN(i)++;
+                size_t q = ULINK(i);
+                nodes.push_back(Node());
+                CHECK(nodes.size() > p+j) << "Not enough nodes allocated. Want "
+                                          << p+j << ", got " << nodes.size()-1;
+                ULINK(p+j) = q;
+                DLINK(q) = p+j;
+                DLINK(p+j) = i;
+                ULINK(i) = p+j;
+                TOP(p+j) = i;
+            }
+
+            // I5. [Finish an option.]
+            m++;
+            DLINK(p) = p+j;
+            nodes.push_back(Node());
+            CHECK(nodes.size()-1 == p+j+1) << "No room for spacer";
+            p = p+j+1;
+            TOP(p) = -m;
+            ULINK(p) = p-j;
+        }
+
+        LOG(3) << "After parsing, memory is: " << debug_nodes();
         fclose(f);
     }
 
