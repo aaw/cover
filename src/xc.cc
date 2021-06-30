@@ -29,6 +29,7 @@ struct Node {
 struct XC {
     std::vector<Node> nodes;
     size_t z;  // Index of last spacer node.
+    size_t y;  // Index of last primary node.
     size_t num_items;
     size_t num_options;
 
@@ -57,11 +58,16 @@ struct XC {
             "No header row listing items.";
         nodes.push_back(Node());  // Header
         int offset = 0, r = 0;
+        y = std::numeric_limits<size_t>::max();
         while (sscanf(s + offset, " %s %n", ss, &r) > 0) {
             offset += r;
             CHECK(header.find(ss) == header.end()) <<
                 "Duplicate item name: " << ss;
             header[ss] = nodes.size();
+            if (std::string(ss) == "|") {
+                y = nodes.size() - 1;
+                continue;
+            }
             Node n;
             n.name = ss;
             n.llink = nodes.size() - 1;
@@ -71,8 +77,14 @@ struct XC {
         num_items = header.size();
 
         // I2. [Finish the horizontal list.]
-        nodes.back().rlink = 0;
-        nodes[0].llink = nodes.size()-1;
+        if (y == std::numeric_limits<size_t>::max()) {
+            y = nodes.size() - 1;
+        } else {
+            nodes[y+1].llink = nodes.size()-1;
+            nodes.back().rlink = y+1;
+        }
+        nodes[y].rlink = 0;
+        nodes[0].llink = y;
 
         // I3. [Prepare for options.]
         for (size_t i = 1; i < nodes.size(); ++i) {
@@ -150,9 +162,7 @@ struct XC {
     }
 
     void cover(size_t i) {
-        LOG(2) << "cover(" << i << ")";
         for (size_t p = DLINK(i); p != i;) {
-            LOG(2) << "hide(" << p << ")";
             hide(p);
             p = DLINK(p);
         }
