@@ -2,6 +2,7 @@
 #include "counters.h"
 #include "flags.h"
 
+#include <iomanip>
 #include <string>
 #include <sstream>
 #include <unordered_map>
@@ -196,6 +197,22 @@ struct XC {
         LOG(1) << oss.str();
     }
 
+    double progress(std::vector<size_t>& x, size_t l) {
+        double p = 0;
+        double denom = 1;
+        for (size_t j = 0; j < l; ++j) {
+            size_t i = TOP(x[j]);
+            size_t k = 1;
+            for(size_t q = DLINK(i); q != i && q != x[j]; q = DLINK(q)) {
+                ++k;
+            }
+            denom *= LEN(i);
+            p += (k - 1) / denom;
+        }
+        p += 1.0 / (2.0 * denom);
+        return p * 100;
+    }
+
     void solve() {
         // X1. [Initialize.]
         size_t l = 0;
@@ -219,6 +236,10 @@ struct XC {
             x[l] = DLINK(i);
 
             while (true) {
+                LOG_EVERY_N_SECS_T(0, 1)
+                    << "sols: " << GETCOUNTER(solutions) << " done: "
+                    << std::setprecision(3) << progress(x,l) << "%";
+
                 // X5. [Try x_l.]
                 LOG(2) << "Trying x_" << l << " = " << x[l];
                 if (x[l] == i) {

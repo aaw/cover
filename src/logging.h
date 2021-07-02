@@ -29,6 +29,9 @@ extern int FLAGS_verbosity;
         VARNAME(__log, __LINE__) = true; \
         VARNAME(__c, __LINE__) = clock(); } \
     if (VARNAME(__log, __LINE__)) Logger(__FILE__,__LINE__)
+#define LOG_EVERY_N_SECS_T(i, n) \
+    LOG_EVERY_N_SECS(i,n) << "(" << \
+    VARNAME(__c, __LINE__)/CLOCKS_PER_SEC << "s) "
 #define CHECK(expr) if (!(expr)) AbortLogger(__FILE__,__LINE__)
 #define CHECK_NO_OVERFLOW(x, y) \
     CHECK(std::numeric_limits<x>::min() <= (y) &&  \

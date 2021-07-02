@@ -53,6 +53,7 @@ struct cstrcmp {
 #define INC1(counter) INC2(counter, 1);
 #define GETMACRO(_1,_2,NAME,...) NAME
 #define INC(...) if (COUNTERS) {GETMACRO(__VA_ARGS__, INC2, INC1)(__VA_ARGS__)}
+#define GETCOUNTER(counter) Counters::singleton().get(STRING(counter))
 
 class Counters {
 public:
@@ -82,6 +83,15 @@ public:
     void dump() {
         print();
         counts_.clear();
+    }
+
+    uint64_t get(const char* key) {
+        auto range = counts_.equal_range(key);
+        uint64_t sum = 0;
+        for(auto itr = range.first; itr != range.second; ++itr) {
+            sum += *itr->second.second;
+        }
+        return sum;
     }
 
     static Counters& singleton() {
