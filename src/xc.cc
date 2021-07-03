@@ -76,6 +76,7 @@ struct XC {
             nodes.push_back(n);
         }
         num_items = header.size();
+        LOG(1) << "Parsed " << num_items << " items";
 
         // I2. [Finish the horizontal list.]
         if (y == std::numeric_limits<size_t>::max()) {
@@ -133,6 +134,7 @@ struct XC {
             ULINK(p) = p-j;
             z = p;
         }
+        LOG(1) << "Parsed " << num_options << " options";
 
         LOG(3) << "After parsing, memory is: " << debug_nodes();
         fclose(f);
