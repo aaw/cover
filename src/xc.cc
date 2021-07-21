@@ -55,25 +55,30 @@ struct XC {
 
         // I1. [Read the first line.]
         std::unordered_map<std::string, size_t> header;
-        CHECK(fgets(s, MAX_LINE_SIZE, f) != NULL) <<
-            "No header row listing items.";
         nodes.push_back(Node());  // Header
-        int offset = 0, r = 0;
         y = std::numeric_limits<size_t>::max();
-        while (sscanf(s + offset, " %s %n", ss, &r) > 0) {
-            offset += r;
-            CHECK(header.find(ss) == header.end()) <<
-                "Duplicate item name: " << ss;
-            header[ss] = nodes.size();
-            if (std::string(ss) == "|") {
-                y = nodes.size() - 1;
-                continue;
+        while(fgets(s, MAX_LINE_SIZE, f) != NULL) {
+            int offset = 0, r = 0;
+            std::string curr;
+            while (sscanf(s + offset, " %s %n", ss, &r) > 0) {
+                curr = ss;
+                if (curr[0] == '#') break;
+                if (curr == "\\") break;
+                offset += r;
+                CHECK(header.find(curr) == header.end()) <<
+                    "Duplicate item name: " << ss;
+                header[curr] = nodes.size();
+                if (curr == "|") {
+                    y = nodes.size() - 1;
+                    continue;
+                }
+                Node n;
+                n.name = curr;
+                n.llink = nodes.size() - 1;
+                nodes.back().rlink = nodes.size();
+                nodes.push_back(n);
             }
-            Node n;
-            n.name = ss;
-            n.llink = nodes.size() - 1;
-            nodes.back().rlink = nodes.size();
-            nodes.push_back(n);
+            if (curr[0] == '#' && !header.empty()) break;
         }
         num_items = header.size();
         LOG(1) << "Parsed " << num_items << " items";
