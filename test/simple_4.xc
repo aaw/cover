@@ -7,6 +7,10 @@ e f g   # no more on this line
 c e
 a d g
 b c f
-a d f
+a d \
+f
 b g
+
+# another comment
+
 d e g

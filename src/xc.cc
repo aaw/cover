@@ -78,7 +78,7 @@ struct XC {
                 nodes.back().rlink = nodes.size();
                 nodes.push_back(n);
             }
-            if (curr[0] == '#' && !header.empty()) break;
+            if (curr != "\\" && !header.empty()) break;
         }
         num_items = header.size();
         LOG(1) << "Parsed " << num_items << " items";
@@ -103,20 +103,23 @@ struct XC {
         nodes.push_back(Node());  // First spacer
 
         num_options = 0;
-        while(fgets(s, MAX_LINE_SIZE, f) != NULL) {
-            num_options++;
-            std::unordered_set<std::string> seen;
-            size_t j = 0;
+        std::unordered_set<std::string> seen;
+        size_t j = 0;
 
+        while(fgets(s, MAX_LINE_SIZE, f) != NULL) {
             int offset = 0, r = 0;
+            std::string curr;
             while (sscanf(s + offset, " %s %n", ss, &r) > 0) {
+                curr = ss;
+                if (curr[0] == '#') break;
+                if (curr == "\\") break;
                 offset += r;
                 ++j;
-                size_t i = header[ss];
-                CHECK(i > 0) << "Item " << ss << " not in header";
-                CHECK(seen.find(ss) == seen.end()) <<
-                    "Duplicate item " << ss;
-                seen.insert(ss);
+                size_t i = header[curr];
+                CHECK(i > 0) << "Item " << curr << " not in header";
+                CHECK(seen.find(curr) == seen.end()) <<
+                    "Duplicate item " << curr;
+                seen.insert(curr);
                 LEN(i)++;
                 size_t q = ULINK(i);
                 nodes.push_back(Node());
@@ -128,8 +131,10 @@ struct XC {
                 ULINK(i) = p+j;
                 TOP(p+j) = i;
             }
+            if (curr == "\\" || seen.empty()) continue;
 
             // I5. [Finish an option.]
+            num_options++;
             m++;
             DLINK(p) = p+j;
             nodes.push_back(Node());
@@ -138,6 +143,8 @@ struct XC {
             TOP(p) = -m;
             ULINK(p) = p-j;
             z = p;
+            seen.clear();
+            j = 0;
         }
         LOG(1) << "Parsed " << num_options << " options";
 
