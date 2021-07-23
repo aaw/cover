@@ -12,6 +12,15 @@
 // increment is also reported:
 //
 //   c counter: [foo] = 21225 (avg: 12.5)
+//
+// A counter that's never been incremented isn't reported. You force a report
+// either way by initializing it to zero:
+//
+//   INITCOUNTER(foo);  // Report 0 count if foo is never incremented.
+//
+// Finally, you can get the current count for debugging:
+//
+//   std::cout << "Count for foo is: " << GETCOUNTER(foo) << std::endl;
 
 #ifndef __COUNTERS_H__
 #define __COUNTERS_H__
