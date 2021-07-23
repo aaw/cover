@@ -229,6 +229,7 @@ struct XC {
 
     void solve() {
         // X1. [Initialize.]
+        INITCOUNTER(solutions);
         size_t l = 0;
         std::vector<size_t> x(num_options);
 

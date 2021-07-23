@@ -40,13 +40,15 @@ struct cstrcmp {
 #define STRING(x) STRING_TOKEN(x)
 #define VARNAME1(x,y) x##y
 #define VARNAME(x,y) VARNAME1(x,y)
-#define INC2(counter, val) \
+#define INITCOUNTER(counter) \
     static uint64_t VARNAME(__count, __LINE__) = 0; \
     static uint64_t VARNAME(__sum, __LINE__) = 0; \
     static CounterRegisterer \
       VARNAME(__reg, __LINE__)(STRING(counter), \
       &VARNAME(__count, __LINE__), \
-      &VARNAME(__sum, __LINE__)); \
+      &VARNAME(__sum, __LINE__));
+#define INC2(counter, val) \
+    INITCOUNTER(counter); \
     if (FLAGS_counters) { \
         ++VARNAME(__count, __LINE__); VARNAME(__sum, __LINE__) += val; \
     }
