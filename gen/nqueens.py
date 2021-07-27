@@ -3,8 +3,6 @@
 # A solution to the n-queens problem is a placement of n queens on an n x n
 # chessboard with no queen able to attack another.
 
-# Translating this into a set cover problem involves
-
 import sys
 
 def nqueens(n):
