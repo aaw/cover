@@ -1,6 +1,11 @@
 #!/usr/bin/python3
 import sys
 
+# Pentominoes are polygons made of 5 unit squares that are glued together
+# edge-to-edge (https://en.wikipedia.org/wiki/Pentomino). This encoding
+# explores ways of packing pentominoes into a rectangle. We use Conway's
+# naming scheme to assign letters O - Z to the 12 pentominoes.
+
 O = ((1,1,1,1,1),)
 P = ((1,1),
      (1,1),
@@ -84,6 +89,10 @@ if __name__ == '__main__':
     except:
         print('Usage: "pentomino.py r c"')
         sys.exit(-1)
+    print("# Pentomino tilings of a {}-by-{} rectangle".format(nr,nc))
+    print("# Items are the 12 pentominoes using Conway's O-Z naming scheme")
+    print("# Options are coordinates describing a placement of a pentomino")
+    print("")
     print(" ".join([k for k in pentominoes] +
                    [pstr((r,c)) for r in range(nr) for c in range(nc)]))
     for label, p in pentominoes.items():
