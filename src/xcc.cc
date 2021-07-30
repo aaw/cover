@@ -177,6 +177,7 @@ struct XC {
 
     void hide(size_t p) {
         for(size_t q = p + 1; q != p;) {
+            if (COLOR(q) < 0) { ++q; continue; }
             int x = TOP(q);
             size_t u = ULINK(q), d = DLINK(q);
             if (x <= 0) { q = u; continue; } // q was a spacer.
@@ -189,6 +190,7 @@ struct XC {
 
     void unhide(size_t p) {
         for(size_t q = p - 1; q != p;) {
+            if (COLOR(q) < 0) { --q; continue; }
             int x = TOP(q);
             size_t u = ULINK(q), d = DLINK(q);
             if (x <= 0) { q = d; continue; } // q was a spacer.
@@ -217,6 +219,35 @@ struct XC {
             unhide(p);
             p = ULINK(p);
         }
+    }
+
+    void purify(size_t p) {
+        int c = COLOR(p), i = TOP(p);
+        CHECK(i >= 0) << "Bad top value for " << p;
+        COLOR(i) = c;
+        for(size_t q = DLINK(i); q != static_cast<size_t>(i); q = DLINK(q)) {
+            if (COLOR(q) == c) { COLOR(q) = -1; }
+            else { hide(q); }
+        }
+    }
+
+    void unpurify(size_t p) {
+        int c = COLOR(p), i = TOP(p);
+        CHECK(i >= 0) << "Bad top value for " << p;
+        for(size_t q = ULINK(i); q != static_cast<size_t>(i); q = ULINK(q)) {
+            if (COLOR(q) < 0) { COLOR(q) = c; }
+            else { unhide(q); }
+        }
+    }
+
+    void commit(size_t p, size_t j) {
+        if (COLOR(p) == 0) cover(j);
+        if (COLOR(p) > 0) purify(p);
+    }
+
+    void uncommit(size_t p, size_t j) {
+        if (COLOR(p) == 0) uncover(j);
+        if (COLOR(p) > 0) unpurify(p);
     }
 
     void visit(std::vector<size_t>& x, size_t l) {
@@ -251,13 +282,13 @@ struct XC {
     }
 
     void solve() {
-        // X1. [Initialize.]
+        // C1. [Initialize.]
         INITCOUNTER(solutions);
         size_t l = 0;
         std::vector<size_t> x(num_options);
 
         while (true) {
-            // X3. [Choose i.]
+            // C3. [Choose i.]
             int theta = std::numeric_limits<int>::max();
             size_t i = RLINK(0);
             for(size_t p = RLINK(0); p != 0; p = RLINK(p)) {
@@ -269,7 +300,7 @@ struct XC {
             }
             LOG(2) << "Chose i=" << i << " (" << NAME(i) << ")";
 
-            // X4. [Cover i.]
+            // C4. [Cover i.]
             cover(i);
             x[l] = DLINK(i);
 
@@ -278,12 +309,12 @@ struct XC {
                     << "sols: " << GETCOUNTER(solutions) << " done: "
                     << std::setprecision(3) << progress(x,l) << "%";
 
-                // X5. [Try x_l.]
+                // C5. [Try x_l.]
                 LOG(2) << "Trying x_" << l << " = " << x[l];
                 if (x[l] == i) {
-                    // X7. [Backtrack.]
+                    // C7. [Backtrack.]
                     uncover(i);
-                    // X8. [Leave level l.]
+                    // C8. [Leave level l.]
                     if (l == 0) return;
                     --l;
                 } else {
@@ -291,26 +322,26 @@ struct XC {
                         int j = TOP(p);
                         if (j <= 0) { p = ULINK(p); }
                         else {
-                            cover(j);
+                            commit(p, j);
                             ++p;
                         }
                     }
                     ++l;
-                    // X2. [Enter level l.]
+                    // C2. [Enter level l.]
                     if (RLINK(0) != 0) break; // -> X3
                     INC(solutions);
                     visit(x, l);
-                    // X8. [Leave level l.]
+                    // C8. [Leave level l.]
                     if (l == 0) return;
                     --l;
                 }
 
-                // X6 [Try again.]
+                // C6 [Try again.]
                 for(size_t p = x[l] - 1; p != x[l];) {
                     int j = TOP(p);
                     if (j <= 0) { p = DLINK(p); }
                     else {
-                        uncover(j);
+                        uncommit(p, j);
                         --p;
                     }
                 }
