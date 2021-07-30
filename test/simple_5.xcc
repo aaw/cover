@@ -1,0 +1,6 @@
+p q r | x y
+p q x y:A
+p r x:A y
+p x:B
+q x:A
+r y:B

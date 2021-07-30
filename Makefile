@@ -6,12 +6,16 @@ LDFLAGS=-g
 LDLIBS=
 RM=rm -f
 
-all: bin/xc
+all: bin/xc bin/xcc
 
 bin/xc: src/xc.cc src/logging.h src/counters.h src/flags.h
 	g++ $(CPPFLAGS) -o bin/xc src/xc.cc $(LDLIBS)
 
+bin/xcc: src/xcc.cc src/logging.h src/counters.h src/flags.h
+	g++ $(CPPFLAGS) -o bin/xcc src/xcc.cc $(LDLIBS)
+
 clean:
 	$(RM) bin/xc
+	$(RM) bin/xcc
 	$(RM) *~
 	$(RM) */*~
