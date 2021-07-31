@@ -6,28 +6,33 @@ def wordsearch(words, rows, cols):
     cstr = dict(((r,c), "({},{})".format(r,c)) \
                  for r in range(rows) for c in range(cols))
     print(" ".join(words + ['|'] + [v for v in cstr.values()]))
-    for word in words:
+    for w in words:
         for r in range(rows):
             for c in range(cols):
-                for w in (word, ''.join(reversed(word))):
-                    if c + len(word) <= cols:
-                        # Generate horizontal placement
-                        os = ["{}:{}".format(coord,color) for coord,color in \
-                              zip((cstr[(r,c+i)] for i in range(len(w))), w)]
-                        print(" ".join([word] + os))
-                    if r + len(word) <= rows:
-                        # Generate vertical placement
-                        os = ["{}:{}".format(coord,color) for coord,color in \
-                              zip((cstr[(r+i,c)] for i in range(len(w))), w)]
-                        print(" ".join([word] + os))
-                    if r + len(word) <= rows and c - len(word) >= 0:
-                        # Generate upward diagonal placement
-                        os = ["{}:{}".format(coord,color) for coord,color in \
-                              zip((cstr[(r+i,c-i)] for i in range(len(w))), w)]
-                    if r + len(word) <= rows and c + len(word) <= cols:
-                        # Generate downward diagonal placement
-                        os = ["{}:{}".format(coord,color) for coord,color in \
-                              zip((cstr[(r+i,c+i)] for i in range(len(w))), w)]
+                if c + len(w) <= cols:
+                    # Generate horizontal placement
+                    os = ["{}:{}".format(coord,color) for coord,color in \
+                          zip((cstr[(r,c+i)] for i in range(len(w))), w)]
+                    print(" ".join([w] + os))
+                    print(" ".join([w] + [x for x in reversed(os)]))
+                if r + len(w) <= rows:
+                    # Generate vertical placement
+                    os = ["{}:{}".format(coord,color) for coord,color in \
+                          zip((cstr[(r+i,c)] for i in range(len(w))), w)]
+                    print(" ".join([w] + os))
+                    print(" ".join([w] + [x for x in reversed(os)]))
+                if r + len(w) <= rows and c - len(w) >= 0:
+                    # Generate upward diagonal placement
+                    os = ["{}:{}".format(coord,color) for coord,color in \
+                          zip((cstr[(r+i,c-i)] for i in range(len(w))), w)]
+                    print(" ".join([w] + os))
+                    print(" ".join([w] + [x for x in reversed(os)]))
+                if r + len(w) <= rows and c + len(w) <= cols:
+                    # Generate downward diagonal placement
+                    os = ["{}:{}".format(coord,color) for coord,color in \
+                          zip((cstr[(r+i,c+i)] for i in range(len(w))), w)]
+                    print(" ".join([w] + os))
+                    print(" ".join([w] + [x for x in reversed(os)]))
 
 if __name__ == '__main__':
     try:
