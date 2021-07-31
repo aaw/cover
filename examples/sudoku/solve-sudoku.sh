@@ -1,3 +1,5 @@
+#!/bin/bash
+
 SCRIPT="$(realpath $0)"
 SCRIPTDIR="$(dirname $SCRIPT)"
 EXAMPLEDIR="$(dirname $SCRIPTDIR)"

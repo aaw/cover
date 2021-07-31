@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # Solves all 95 hard sudoku puzzles from a list on magictour.free.fr.
 
 SCRIPT="$(realpath $0)"
