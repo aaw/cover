@@ -138,6 +138,8 @@ struct XC {
                 ++j;
                 size_t i = header[curr];
                 CHECK(i > 0) << "Item " << curr << " not in header";
+                CHECK(i > y || cnum == 0) <<
+                    "Color can't be assigned to primary item (" << ss << ")";
                 CHECK(seen.find(curr) == seen.end()) <<
                     "Duplicate item " << curr;
                 seen.insert(curr);
