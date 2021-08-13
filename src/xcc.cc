@@ -80,7 +80,7 @@ struct XC {
             std::string curr;
             while (sscanf(s + offset, " %s %n", ss, &r) > 0) {
                 curr = ss;
-                if (curr[0] == '#') break;
+                if (curr[0] == '/' && curr.size() > 1 && curr[1] == '/') break;
                 if (curr == "\\") break;
                 offset += r;
                 CHECK(header.find(curr) == header.end()) <<
@@ -132,7 +132,7 @@ struct XC {
             while (sscanf(s + offset, " %s %n", ss, &r) > 0) {
                 cnum = color_parse(ss, colors, next_color, &curr);
                 next_color = std::max(next_color, cnum + 1);
-                if (curr[0] == '#') break;
+                if (curr[0] == '/' && curr.size() > 1 && curr[1] == '/') break;
                 if (curr == "\\") break;
                 offset += r;
                 ++j;

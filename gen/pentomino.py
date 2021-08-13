@@ -89,9 +89,9 @@ if __name__ == '__main__':
     except:
         print('Usage: "pentomino.py r c"')
         sys.exit(-1)
-    print("# Pentomino tilings of a {}-by-{} rectangle".format(nr,nc))
-    print("# Items are the 12 pentominoes using Conway's O-Z naming scheme")
-    print("# Options are coordinates describing a placement of a pentomino")
+    print("// Pentomino tilings of a {}-by-{} rectangle".format(nr,nc))
+    print("// Items are the 12 pentominoes using Conway's O-Z naming scheme")
+    print("// Options are coordinates describing a placement of a pentomino")
     print("")
     print(" ".join([k for k in pentominoes] +
                    [pstr((r,c)) for r in range(nr) for c in range(nc)]))
