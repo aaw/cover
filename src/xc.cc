@@ -238,8 +238,10 @@ struct XC {
             int theta = std::numeric_limits<int>::max();
             size_t i = RLINK(0);
             for(size_t p = RLINK(0); p != 0; p = RLINK(p)) {
-                if (LEN(p) < theta) {
-                    theta = LEN(p);
+                int lambda = LEN(p);
+                if (lambda > 1 && NAME(p)[0] == '#') lambda += num_options;
+                if (lambda < theta) {
+                    theta = lambda;
                     i = p;
                     if (theta == 0) break;
                 }
