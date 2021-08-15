@@ -29,7 +29,7 @@ struct Node {
 #define COLOR(i) (nodes[i].color)
 #define MAX_LINE_SIZE (10000)
 
-struct XC {
+struct XCC {
     std::vector<Node> nodes;
     size_t z;  // Index of last spacer node.
     size_t y;  // Index of last primary node.
@@ -65,7 +65,7 @@ struct XC {
         return 0;
     }
 
-    XC(const char* filename) {
+    XCC(const char* filename) {
         FILE* f = fopen(filename, "r");
         CHECK(f) << "Failed to open file: " << filename;
         char s[MAX_LINE_SIZE];
@@ -363,6 +363,6 @@ int main(int argc, char** argv) {
         << "Usage: " << argv[0] << " [-vV] <filename>\n"
         << "V: verbosity (>= 2 prints solutions)\n";
     init_counters();
-    XC(argv[oidx]).solve();
+    XCC(argv[oidx]).solve();
     return 0;
 }
