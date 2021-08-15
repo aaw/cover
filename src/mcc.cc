@@ -2,6 +2,7 @@
 #include "counters.h"
 #include "flags.h"
 
+#include <cctype>
 #include <iomanip>
 #include <string>
 #include <sstream>
@@ -15,6 +16,8 @@ struct Node {
     size_t dlink;
     size_t llink;
     size_t rlink;
+    size_t slack;
+    size_t bound;
     int top_or_len;
     int color = 0;
 };
@@ -27,9 +30,11 @@ struct Node {
 #define TOP(i) (nodes[i].top_or_len)
 #define LEN(i) (nodes[i].top_or_len)
 #define COLOR(i) (nodes[i].color)
+#define SLACK(i) (nodes[i].slack)
+#define BOUND(i) (nodes[i].bound)
 #define MAX_LINE_SIZE (10000)
 
-struct XC {
+struct MCC {
     std::vector<Node> nodes;
     size_t z;  // Index of last spacer node.
     size_t y;  // Index of last primary node.
@@ -65,7 +70,34 @@ struct XC {
         return 0;
     }
 
-    XC(const char* filename) {
+    void multiplicity_parse(std::string* curr, size_t* low, size_t* high) {
+        size_t curr_size = curr->size();
+        size_t state = 0;
+        for (size_t i = 0; i < curr->size(); ++i) {
+            char ch = (*curr)[i];
+            if (state == 0 && ch == '[') {
+                curr_size = i;
+                ++state;
+                *low = 0;
+            } else if (state == 1) {
+                CHECK(ch == ':' || isdigit(ch))
+                    << "Expected ':' or digit after '[': " << *curr;
+                if (ch == ':') { ++state; *high = 0; }
+                else /* isdigit */ { *low *= 10; *low += ch - '0'; }
+            } else if (state == 2) {
+                CHECK(ch == ']' || isdigit(ch))
+                    << "Expected ']' or digit after ':': " << *curr;
+                if (ch == ']') { ++state; }
+                else /* isdigit */ { *high *= 10; *high += ch - '0'; }
+            } else if (state == 3) {
+                CHECK(false) << "Expected no more input after ']': " << *curr;
+            }
+        }
+        *curr = curr->substr(0, curr_size);
+        LOG(0) << "curr = " << *curr << ", low = " << *low << ", high = " << *high;
+    }
+
+    MCC(const char* filename) {
         FILE* f = fopen(filename, "r");
         CHECK(f) << "Failed to open file: " << filename;
         char s[MAX_LINE_SIZE];
@@ -83,6 +115,8 @@ struct XC {
                 if (curr[0] == '/' && curr.size() > 1 && curr[1] == '/') break;
                 if (curr == "\\") break;
                 offset += r;
+                size_t low = 1, high = 1;
+                multiplicity_parse(&curr, &low, &high);
                 CHECK(header.find(curr) == header.end()) <<
                     "Duplicate item name: " << ss;
                 header[curr] = nodes.size();
@@ -93,6 +127,8 @@ struct XC {
                 Node n;
                 n.name = curr;
                 n.llink = nodes.size() - 1;
+                n.slack = high - low;
+                n.bound = high;
                 nodes.back().rlink = nodes.size();
                 nodes.push_back(n);
             }
@@ -363,6 +399,6 @@ int main(int argc, char** argv) {
         << "Usage: " << argv[0] << " [-vV] <filename>\n"
         << "V: verbosity (>= 2 prints solutions)\n";
     init_counters();
-    XC(argv[oidx]).solve();
+    MCC(argv[oidx]).solve();
     return 0;
 }
