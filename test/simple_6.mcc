@@ -1,0 +1,6 @@
+A B C[2:3] | X Y
+A B X:0 Y:0
+A C X:1 Y:1
+C X:0
+B X:1
+C Y:1
