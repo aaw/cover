@@ -381,8 +381,37 @@ struct MCC {
                     << std::setprecision(3) << progress(x,l) << "%";
 
                 // M5. [Possibly tweak x_l.]
-                // TODO
+                bool leave_level = false;
+                if (BOUND(i) == 0 && SLACK(i) == 0 && x[l] != i) {
+                    LOG(3) << "Pass... TODO: carefully remove this case.";
+                    // -> M6
+                } else if (BOUND(i) == 0 && SLACK(i) == 0 ||
+                           LEN(i) <= BOUND(i) - SLACK(i)) {
+                    // M8. TODO
+                    leave_level = true;
+                    // -> M9
+                } else if (x[l] != i) {
+                    tweak(x[l], i);
+                    // -> M6
+                } else if (BOUND(i) != 0) {
+                    p = LLINK(i);
+                    q = RLINK(i);
+                    RLINK(p) = q;
+                    LLINK(q) = p;
+                    // -> M6
+                }
 
+                if (!leave_level) {
+                    // M6. [Try x_l.]
+                    // TODO: -> M2
+                }
+
+                while(true) {
+                    // M9. [Leave level l.]
+                    // TODO
+                    // -> M8, loop
+                    // OR -> M7, break
+                }
             }
         }
     }
