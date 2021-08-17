@@ -93,8 +93,8 @@ struct MCC {
                 CHECK(false) << "Expected no more input after ']': " << *curr;
             }
         }
-        CHECK(*low > 0) << "Bad low multiplicity for " << *curr;
-        CHECK(*high > 0) << "Bad high multiplicity for " << *curr;
+        CHECK(*low >= 0) << "Bad low multiplicity for " << *curr;
+        CHECK(*high >= 0) << "Bad high multiplicity for " << *curr;
         CHECK(state == 0 || state == 3)
             << "Incomplete input for option with multiplicity: " << *curr;
         *curr = curr->substr(0, curr_size);
@@ -291,6 +291,31 @@ struct MCC {
         if (COLOR(p) > 0) unpurify(p);
     }
 
+    void tweak(size_t x, size_t p) {
+        if (BOUND(p) != 0) hide(x);
+        DLINK(p) = DLINK(x);
+        ULINK(DLINK(x)) = p;
+        LEN(p)--;
+    }
+
+    void untweak(std::vector<size_t>& ft, size_t l, size_t i) {
+        size_t a = ft[l];
+        size_t p = a <= num_items ? a : TOP(a);
+        size_t x = a, y = p;
+        size_t z = DLINK(p);
+        DLINK(p) = x;
+        size_t k = 0;
+        while (x != z) {
+            ULINK(x) = y;
+            ++k;
+            unhide(x);
+            y = x;
+            x = DLINK(x);
+        }
+        ULINK(z) = y;
+        LEN(p) += k;
+    }
+
     void visit(std::vector<size_t>& x, size_t l) {
         std::ostringstream oss;
         oss << "Solution: " << std::endl;
@@ -323,13 +348,14 @@ struct MCC {
     }
 
     void solve() {
-        // C1. [Initialize.]
+        // M1. [Initialize.]
         INITCOUNTER(solutions);
         size_t l = 0;
         std::vector<size_t> x(num_options);
+        std::vector<size_t> ft(num_options);
 
         while (true) {
-            // C3. [Choose i.]
+            // M3. [Choose i.]
             int theta = std::numeric_limits<int>::max();
             size_t i = RLINK(0);
             for(size_t p = RLINK(0); p != 0; p = RLINK(p)) {
@@ -342,54 +368,21 @@ struct MCC {
                 }
             }
             LOG(2) << "Chose i=" << i << " (" << NAME(i) << ")";
+            // TODO: If the branching degree theta_i = 0, go to M9.
 
-            // C4. [Cover i.]
-            cover(i);
+            // M4. [Prepare to branch on i.]
             x[l] = DLINK(i);
+            if (--BOUND(i) == 0) cover(i);
+            if (BOUND(i) != 0 || SLACK(i) != 0) ft[l] = x[l];
 
             while (true) {
                 LOG_EVERY_N_SECS_T(0, 1)
                     << "sols: " << GETCOUNTER(solutions) << " done: "
                     << std::setprecision(3) << progress(x,l) << "%";
 
-                // C5. [Try x_l.]
-                LOG(2) << "Trying x_" << l << " = " << x[l];
-                if (x[l] == i) {
-                    // C7. [Backtrack.]
-                    uncover(i);
-                    // C8. [Leave level l.]
-                    if (l == 0) return;
-                    --l;
-                } else {
-                    for(size_t p = x[l] + 1; p != x[l];) {
-                        int j = TOP(p);
-                        if (j <= 0) { p = ULINK(p); }
-                        else {
-                            commit(p, j);
-                            ++p;
-                        }
-                    }
-                    ++l;
-                    // C2. [Enter level l.]
-                    if (RLINK(0) != 0) break; // -> X3
-                    INC(solutions);
-                    visit(x, l);
-                    // C8. [Leave level l.]
-                    if (l == 0) return;
-                    --l;
-                }
+                // M5. [Possibly tweak x_l.]
+                // TODO
 
-                // C6 [Try again.]
-                for(size_t p = x[l] - 1; p != x[l];) {
-                    int j = TOP(p);
-                    if (j <= 0) { p = DLINK(p); }
-                    else {
-                        uncommit(p, j);
-                        --p;
-                    }
-                }
-                i = TOP(x[l]);
-                x[l] = DLINK(x[l]);
             }
         }
     }
