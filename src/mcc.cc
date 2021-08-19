@@ -326,6 +326,7 @@ struct MCC {
         oss << "Solution: " << std::endl;
         for (size_t j = 0; j < l; ++j) {
             size_t r = x[j];
+            if (r <= num_items) continue;
             while (TOP(r) >= 0) ++r;
             oss << "  " << -TOP(r) << ": ";
             for(size_t p = ULINK(r); TOP(p) > 0; ++p) {
@@ -441,7 +442,6 @@ struct MCC {
                     // M2. [Enter level l.]
                     LOG(0) << "M2, RLINK(0) = " << RLINK(0);
                     if (RLINK(0) != 0) break;  // -> M3
-                    // TODO: implement exercise 164.
                     INC(solutions);
                     visit(x, l);  // -> M9
                 } else {
