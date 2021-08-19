@@ -37,7 +37,6 @@ struct Node {
 struct MCC {
     std::vector<Node> nodes;
     size_t z;  // Index of last spacer node.
-    size_t y;  // Index of last primary node.
     size_t num_items;
     size_t num_primary_items;
     size_t num_options;
@@ -49,8 +48,8 @@ struct MCC {
         for (const Node& n : nodes) {
             oss << i << ": { " << n.name << " l: " << n.llink
                 << " r: " << n.rlink << " u: " << n.ulink << " d: " << n.dlink
-                << " t: " << n.top_or_len << " c: " << n.color << " }"
-                << std::endl;
+                << " t: " << n.top_or_len << " c: " << n.color << " s: "
+                << n.slack << " b: " << n.bound << " }" << std::endl;
             ++i;
         }
         return oss.str();
@@ -110,7 +109,8 @@ struct MCC {
         // I1. [Read the first line.]
         std::unordered_map<std::string, size_t> header;
         nodes.push_back(Node());  // Header
-        y = std::numeric_limits<size_t>::max();
+        // TODO: fix bug in y / num_primary_items in xcc
+        num_primary_items = std::numeric_limits<size_t>::max();
         while(fgets(s, MAX_LINE_SIZE, f) != NULL) {
             int offset = 0, r = 0;
             std::string curr;
@@ -123,11 +123,11 @@ struct MCC {
                 multiplicity_parse(&curr, &low, &high);
                 CHECK(header.find(curr) == header.end()) <<
                     "Duplicate item name: " << ss;
-                header[curr] = nodes.size();
                 if (curr == "|") {
-                    y = nodes.size() - 1;
+                    num_primary_items = nodes.size() - 1;
                     continue;
                 }
+                header[curr] = nodes.size();
                 Node n;
                 n.name = curr;
                 n.llink = nodes.size() - 1;
@@ -139,18 +139,18 @@ struct MCC {
             if (curr != "\\" && !header.empty()) break;
         }
         num_items = header.size();
-        LOG(1) << "Parsed " << num_items << " items";
 
         // I2. [Finish the horizontal list.]
-        if (y == std::numeric_limits<size_t>::max()) {
-            y = nodes.size() - 1;
+        if (num_primary_items == std::numeric_limits<size_t>::max()) {
+            num_primary_items = nodes.size() - 1;
         } else {
-            nodes[y+1].llink = nodes.size()-1;
-            nodes.back().rlink = y+1;
+            nodes[num_primary_items+1].llink = nodes.size()-1;
+            nodes.back().rlink = num_primary_items+1;
         }
-        nodes[y].rlink = 0;
-        nodes[0].llink = y;
-        num_primary_items = y+1;
+        nodes[num_primary_items].rlink = 0;
+        nodes[0].llink = num_primary_items;
+        LOG(1) << "Parsed " << num_items << " items (" << num_primary_items
+               << " primary)";
 
         // I3. [Prepare for options.]
         for (size_t i = 1; i < nodes.size(); ++i) {
@@ -179,7 +179,7 @@ struct MCC {
                 ++j;
                 size_t i = header[curr];
                 CHECK(i > 0) << "Item " << curr << " not in header";
-                CHECK(i > y || cnum == 0) <<
+                CHECK(i >= num_primary_items || cnum == 0) <<
                     "Color can't be assigned to primary item (" << ss << ")";
                 CHECK(seen.find(curr) == seen.end()) <<
                     "Duplicate item " << curr;
@@ -294,15 +294,18 @@ struct MCC {
     }
 
     void tweak(size_t x, size_t p) {
+        CHECK(x == DLINK(p));
+        CHECK(p == ULINK(x));
         if (BOUND(p) != 0) hide(x);
-        DLINK(p) = DLINK(x);
-        ULINK(DLINK(x)) = p;
-        LEN(p)--;
+        size_t d = DLINK(x);
+        DLINK(p) = d;
+        ULINK(d) = p;
+        --LEN(p);
     }
 
     void untweak(std::vector<size_t>& ft, size_t l, size_t i) {
         size_t a = ft[l];
-        size_t p = a <= num_items ? a : TOP(a);
+        int p = a <= num_items ? a : TOP(a);
         size_t x = a, y = p;
         size_t z = DLINK(p);
         DLINK(p) = x;
@@ -361,12 +364,14 @@ struct MCC {
             // M3. [Choose i.]
             int theta = std::numeric_limits<int>::max();
             i = RLINK(0);
+            LOG(0) << "M3, initializing i = " << i;
             for(size_t p = RLINK(0); p != 0; p = RLINK(p)) {
                 int lambda = LEN(p);
                 if (lambda > 1 && NAME(p)[0] == '#') lambda += num_options;
                 if (lambda < theta) {
                     theta = lambda;
                     i = p;
+                    LOG(0) << "  found better i: " << i;
                     if (theta == 0) break;
                 }
             }
@@ -375,6 +380,7 @@ struct MCC {
 
             // M4. [Prepare to branch on i.]
             x[l] = DLINK(i);
+            LOG(0) << "M4, setting x[" << l << "] = " << x[l];
             if (--BOUND(i) == 0) cover(i);
             if (BOUND(i) != 0 || SLACK(i) != 0) ft[l] = x[l];
 
@@ -385,18 +391,21 @@ struct MCC {
 
                 // M5. [Possibly tweak x_l.]
                 bool leave_level = false;
-                if (BOUND(i) == 0 && SLACK(i) == 0 && x[l] != i) {
-                    LOG(3) << "Pass... TODO: carefully remove this case.";
-                } else if ((BOUND(i) == 0 && SLACK(i) == 0) ||
-                           (LEN(i) <= (int)BOUND(i) - (int)SLACK(i))) {
-                    // M8. [Restore i.]
-                    if (BOUND(i) == 0 && SLACK(i) == 0) uncover(i);
-                    else untweak(ft, l, i);
-                    ++BOUND(i);
-                    leave_level = true;  // -> M9
+                if (BOUND(i) == 0 && SLACK(i) == 0 && x[l] == i) {
+                    LOG(0) << "M5, leaving level because x[" << l << "]=" << i;
+                    leave_level = true;  // -> M8
+                } else if ((BOUND(i) != 0 || SLACK(i) != 0) &&
+                           LEN(i) <= (int)BOUND(i) - (int)SLACK(i)) {
+                    LOG(0) << "M5, leaving level because LEN(" << i << ") = "
+                           << LEN(i) << " <= " << "BOUND(" << i << ") - SLACK("
+                           << i << ") = " << (int)BOUND(i) - (int)SLACK(i);
+                    leave_level = true;  // -> M8
                 } else if (x[l] != i) {
+                    LOG(0) << "M5, tweak(" << x[l] << ", " << i << ")";
                     tweak(x[l], i);
                 } else if (BOUND(i) != 0) {
+                    LOG(0) << "M5, dancing around " << LLINK(i) << " and "
+                           << RLINK(i);
                     size_t p = LLINK(i);
                     size_t q = RLINK(i);
                     RLINK(p) = q;
@@ -404,17 +413,23 @@ struct MCC {
                 }
 
                 if (!leave_level) {
+                    LOG(0) << "M6, x[" << l << "] = " << x[l];
                     // M6. [Try x_l.]
                     if (x[l] != i) {
                         for(size_t p = x[l] + 1; p != x[l];) {
                             size_t j = TOP(p);
-                            if (j <= 0) {
+                            if (TOP(p) <= 0) {
+                                LOG(0) << "A: p = " << p << ", j = " << j;
                                 p = ULINK(p);
                             } else if (j <= num_primary_items) {
+                                LOG(0) << "Primary: p = " << p << ", j = " << j
+                                       << " ("  << NAME(j) << ")";
                                 --BOUND(j);
                                 ++p;
                                 if (BOUND(j) == 0) cover(j);
                             } else {
+                                LOG(0) << "2nd: p = " << p << ", j = " << j
+                                       << " (" << NAME(j) << ")";
                                 commit(p, j);
                                 ++p;
                             }
@@ -423,13 +438,21 @@ struct MCC {
                     ++l;
 
                     // M2. [Enter level l.]
+                    LOG(0) << "M2";
                     if (RLINK(0) == 0) {
                         INC(solutions);
                         visit(x, l);
                     }
+                } else {
+                    // M8. [Restore i.]
+                    LOG(0) << "M8 (mid)";
+                    if (BOUND(i) == 0 && SLACK(i) == 0) uncover(i);
+                    else untweak(ft, l, i);
+                    ++BOUND(i);
                 }
 
                 while(true) {
+                    LOG(0) << "M9";
                     // M9. [Leave level l.]
                     if (l == 0) return;
                     --l;
@@ -440,22 +463,28 @@ struct MCC {
                         LLINK(q) = i;
                         RLINK(p) = i;
                         // M8. [Restore i.]
+                        LOG(0) << "M8 (lower)";
                         if (BOUND(i) == 0 && SLACK(i) == 0) uncover(i);
                         else untweak(ft, l, i);
                         ++BOUND(i);
-                        continue;  // -> M9
+                        // -> M9
                     } else {
                         i = TOP(x[l]);
+                        CHECK(static_cast<int>(i) == TOP(x[l]));
+                        LOG(0) << "M7";
                         // M7. [Try again.]
                         for(size_t p = x[l] - 1; p != x[l];) {
+                            LOG(0) << "TOP(" << p << ") = " << TOP(p);
                             size_t j = TOP(p);
-                            if (j <= 0) {
+                            if (TOP(p) <= 0) {
                                 p = DLINK(p);
                             } else if (j <= num_primary_items) {
                                 ++BOUND(j);
                                 --p;
                                 if (BOUND(j) == 1) { uncover(j); }
-                                else { uncommit(p, j); --p; }
+                            } else {
+                                uncommit(p, j);
+                                --p;
                             }
                         }
                         x[l] = DLINK(x[l]);
