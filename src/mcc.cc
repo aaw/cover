@@ -435,14 +435,15 @@ struct MCC {
                             }
                         }
                     }
+                    LOG(0) << "level " << l << " -> " << l+1;
                     ++l;
 
                     // M2. [Enter level l.]
-                    LOG(0) << "M2";
-                    if (RLINK(0) == 0) {
-                        INC(solutions);
-                        visit(x, l);
-                    }
+                    LOG(0) << "M2, RLINK(0) = " << RLINK(0);
+                    if (RLINK(0) != 0) break;  // -> M3
+                    // TODO: implement exercise 164.
+                    INC(solutions);
+                    visit(x, l);  // -> M9
                 } else {
                     // M8. [Restore i.]
                     LOG(0) << "M8 (mid)";
@@ -452,7 +453,7 @@ struct MCC {
                 }
 
                 while(true) {
-                    LOG(0) << "M9";
+                    LOG(0) << "M9, l = " << l << " -> " << l-1;
                     // M9. [Leave level l.]
                     if (l == 0) return;
                     --l;
@@ -474,7 +475,6 @@ struct MCC {
                         LOG(0) << "M7";
                         // M7. [Try again.]
                         for(size_t p = x[l] - 1; p != x[l];) {
-                            LOG(0) << "TOP(" << p << ") = " << TOP(p);
                             size_t j = TOP(p);
                             if (TOP(p) <= 0) {
                                 p = DLINK(p);
