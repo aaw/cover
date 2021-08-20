@@ -32,8 +32,8 @@ struct Node {
 struct XCC {
     std::vector<Node> nodes;
     size_t z;  // Index of last spacer node.
-    size_t y;  // Index of last primary node.
     size_t num_items;
+    size_t num_primary_items;
     size_t num_options;
 
     std::string debug_nodes() {
@@ -74,7 +74,7 @@ struct XCC {
         // I1. [Read the first line.]
         std::unordered_map<std::string, size_t> header;
         nodes.push_back(Node());  // Header
-        y = std::numeric_limits<size_t>::max();
+        num_primary_items = std::numeric_limits<size_t>::max();
         while(fgets(s, MAX_LINE_SIZE, f) != NULL) {
             int offset = 0, r = 0;
             std::string curr;
@@ -85,11 +85,11 @@ struct XCC {
                 offset += r;
                 CHECK(header.find(curr) == header.end()) <<
                     "Duplicate item name: " << ss;
-                header[curr] = nodes.size();
                 if (curr == "|") {
-                    y = nodes.size() - 1;
+                    num_primary_items = nodes.size() - 1;
                     continue;
                 }
+                header[curr] = nodes.size();
                 Node n;
                 n.name = curr;
                 n.llink = nodes.size() - 1;
@@ -99,17 +99,18 @@ struct XCC {
             if (curr != "\\" && !header.empty()) break;
         }
         num_items = header.size();
-        LOG(1) << "Parsed " << num_items << " items";
 
         // I2. [Finish the horizontal list.]
-        if (y == std::numeric_limits<size_t>::max()) {
-            y = nodes.size() - 1;
+        if (num_primary_items == std::numeric_limits<size_t>::max()) {
+            num_primary_items = nodes.size() - 1;
         } else {
-            nodes[y+1].llink = nodes.size()-1;
-            nodes.back().rlink = y+1;
+            nodes[num_primary_items + 1].llink = nodes.size() - 1;
+            nodes.back().rlink = num_primary_items + 1;
         }
-        nodes[y].rlink = 0;
-        nodes[0].llink = y;
+        nodes[num_primary_items].rlink = 0;
+        nodes[0].llink = num_primary_items;
+        LOG(1) << "Parsed " << num_items << " items (" << num_primary_items
+               << " primary)";
 
         // I3. [Prepare for options.]
         for (size_t i = 1; i < nodes.size(); ++i) {
@@ -138,7 +139,7 @@ struct XCC {
                 ++j;
                 size_t i = header[curr];
                 CHECK(i > 0) << "Item " << curr << " not in header";
-                CHECK(i > y || cnum == 0) <<
+                CHECK(i >= num_primary_items || cnum == 0) <<
                     "Color can't be assigned to primary item (" << ss << ")";
                 CHECK(seen.find(curr) == seen.end()) <<
                     "Duplicate item " << curr;
@@ -332,7 +333,7 @@ struct XCC {
                     }
                     ++l;
                     // C2. [Enter level l.]
-                    if (RLINK(0) != 0) break; // -> X3
+                    if (RLINK(0) != 0) break; // -> C3
                     INC(solutions);
                     visit(x, l);
                     // C8. [Leave level l.]
