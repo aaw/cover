@@ -303,8 +303,7 @@ struct MCC {
         --LEN(p);
     }
 
-    void untweak(std::vector<size_t>& ft, size_t l, size_t i) {
-        size_t a = ft[l];
+    void untweak(size_t a, size_t i) {
         int p = a <= num_items ? a : TOP(a);
         size_t x = a, y = p;
         size_t z = DLINK(p);
@@ -319,6 +318,38 @@ struct MCC {
         }
         ULINK(z) = y;
         LEN(p) += k;
+    }
+
+    void try_option(size_t x) {
+        for(size_t p = x + 1; p != x;) {
+            size_t j = TOP(p);
+            if (TOP(p) <= 0) {
+                p = ULINK(p);
+            } else if (j <= num_primary_items) {
+                --BOUND(j);
+                ++p;
+                if (BOUND(j) == 0) cover(j);
+            } else {
+                commit(p, j);
+                ++p;
+            }
+        }
+    }
+
+    void try_again(size_t x) {
+        for(size_t p = x - 1; p != x;) {
+            size_t j = TOP(p);
+            if (TOP(p) <= 0) {
+                p = DLINK(p);
+            } else if (j <= num_primary_items) {
+                ++BOUND(j);
+                --p;
+                if (BOUND(j) == 1) uncover(j);
+            } else {
+                uncommit(p, j);
+                --p;
+            }
+        }
     }
 
     void visit(std::vector<size_t>& x, size_t l) {
@@ -365,14 +396,12 @@ struct MCC {
             // M3. [Choose i.]
             int theta = std::numeric_limits<int>::max();
             i = RLINK(0);
-            LOG(0) << "M3, initializing i = " << i;
             for(size_t p = RLINK(0); p != 0; p = RLINK(p)) {
                 int lambda = LEN(p);
                 if (lambda > 1 && NAME(p)[0] == '#') lambda += num_options;
                 if (lambda < theta) {
                     theta = lambda;
                     i = p;
-                    LOG(0) << "  found better i: " << i;
                     if (theta == 0) break;
                 }
             }
@@ -381,7 +410,6 @@ struct MCC {
 
             // M4. [Prepare to branch on i.]
             x[l] = DLINK(i);
-            LOG(0) << "M4, setting x[" << l << "] = " << x[l];
             if (--BOUND(i) == 0) cover(i);
             if (BOUND(i) != 0 || SLACK(i) != 0) ft[l] = x[l];
 
@@ -393,67 +421,36 @@ struct MCC {
                 // M5. [Possibly tweak x_l.]
                 bool leave_level = false;
                 if (BOUND(i) == 0 && SLACK(i) == 0 && x[l] == i) {
-                    LOG(0) << "M5, leaving level because x[" << l << "]=" << i;
                     leave_level = true;  // -> M8
                 } else if ((BOUND(i) != 0 || SLACK(i) != 0) &&
                            LEN(i) <= (int)BOUND(i) - (int)SLACK(i)) {
-                    LOG(0) << "M5, leaving level because LEN(" << i << ") = "
-                           << LEN(i) << " <= " << "BOUND(" << i << ") - SLACK("
-                           << i << ") = " << (int)BOUND(i) - (int)SLACK(i);
                     leave_level = true;  // -> M8
                 } else if (x[l] != i) {
-                    LOG(0) << "M5, tweak(" << x[l] << ", " << i << ")";
                     tweak(x[l], i);
                 } else if (BOUND(i) != 0) {
-                    LOG(0) << "M5, dancing around " << LLINK(i) << " and "
-                           << RLINK(i);
                     size_t p = LLINK(i);
                     size_t q = RLINK(i);
                     RLINK(p) = q;
                     LLINK(q) = p;
                 }
 
-                if (!leave_level) {
-                    LOG(0) << "M6, x[" << l << "] = " << x[l];
+                if (leave_level) {
+                    // M8. [Restore i.]
+                    if (BOUND(i) == 0 && SLACK(i) == 0) uncover(i);
+                    else untweak(ft[l], i);
+                    ++BOUND(i);
+                } else {
                     // M6. [Try x_l.]
-                    if (x[l] != i) {
-                        for(size_t p = x[l] + 1; p != x[l];) {
-                            size_t j = TOP(p);
-                            if (TOP(p) <= 0) {
-                                LOG(0) << "A: p = " << p << ", j = " << j;
-                                p = ULINK(p);
-                            } else if (j <= num_primary_items) {
-                                LOG(0) << "Primary: p = " << p << ", j = " << j
-                                       << " ("  << NAME(j) << ")";
-                                --BOUND(j);
-                                ++p;
-                                if (BOUND(j) == 0) cover(j);
-                            } else {
-                                LOG(0) << "2nd: p = " << p << ", j = " << j
-                                       << " (" << NAME(j) << ")";
-                                commit(p, j);
-                                ++p;
-                            }
-                        }
-                    }
-                    LOG(0) << "level " << l << " -> " << l+1;
+                    if (x[l] != i) try_option(x[l]);
                     ++l;
 
                     // M2. [Enter level l.]
-                    LOG(0) << "M2, RLINK(0) = " << RLINK(0);
                     if (RLINK(0) != 0) break;  // -> M3
                     INC(solutions);
-                    visit(x, l);  // -> M9
-                } else {
-                    // M8. [Restore i.]
-                    LOG(0) << "M8 (mid)";
-                    if (BOUND(i) == 0 && SLACK(i) == 0) uncover(i);
-                    else untweak(ft, l, i);
-                    ++BOUND(i);
+                    visit(x, l);
                 }
 
                 while(true) {
-                    LOG(0) << "M9, l = " << l << " -> " << l-1;
                     // M9. [Leave level l.]
                     if (l == 0) return;
                     --l;
@@ -463,30 +460,17 @@ struct MCC {
                         size_t q = RLINK(i);
                         LLINK(q) = i;
                         RLINK(p) = i;
+
                         // M8. [Restore i.]
-                        LOG(0) << "M8 (lower)";
                         if (BOUND(i) == 0 && SLACK(i) == 0) uncover(i);
-                        else untweak(ft, l, i);
-                        ++BOUND(i);
-                        // -> M9
+                        else untweak(ft[l], i);
+                        ++BOUND(i);  // -> M9
                     } else {
                         i = TOP(x[l]);
                         CHECK(static_cast<int>(i) == TOP(x[l]));
-                        LOG(0) << "M7";
+
                         // M7. [Try again.]
-                        for(size_t p = x[l] - 1; p != x[l];) {
-                            size_t j = TOP(p);
-                            if (TOP(p) <= 0) {
-                                p = DLINK(p);
-                            } else if (j <= num_primary_items) {
-                                ++BOUND(j);
-                                --p;
-                                if (BOUND(j) == 1) { uncover(j); }
-                            } else {
-                                uncommit(p, j);
-                                --p;
-                            }
-                        }
+                        try_again(x[l]);
                         x[l] = DLINK(x[l]);
                         break;  // -> M5
                     }
