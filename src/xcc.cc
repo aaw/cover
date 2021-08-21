@@ -315,13 +315,16 @@ struct XCC {
                     << std::setprecision(3) << progress(x,l) << "%";
 
                 // C5. [Try x_l.]
+                LOG(2) << "x[" << l << "] = " << x[l] << ", i=" << i;
                 LOG(2) << "Trying x_" << l << " = " << x[l];
                 if (x[l] == i) {
+                    LOG(2) << "backtrack";
                     // C7. [Backtrack.]
                     uncover(i);
                     // C8. [Leave level l.]
                     if (l == 0) return;
                     --l;
+                    LOG(2) << "l is now " << l;
                 } else {
                     for(size_t p = x[l] + 1; p != x[l];) {
                         int j = TOP(p);

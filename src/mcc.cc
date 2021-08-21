@@ -109,7 +109,6 @@ struct MCC {
         // I1. [Read the first line.]
         std::unordered_map<std::string, size_t> header;
         nodes.push_back(Node());  // Header
-        // TODO: fix bug in y / num_primary_items in xcc
         num_primary_items = std::numeric_limits<size_t>::max();
         while(fgets(s, MAX_LINE_SIZE, f) != NULL) {
             int offset = 0, r = 0;
@@ -297,6 +296,7 @@ struct MCC {
         CHECK(x == DLINK(p));
         CHECK(p == ULINK(x));
         if (BOUND(p) != 0) hide(x);
+        CHECK(COLOR(x) >= 0) << "Attempt to tweak non-primary?";
         size_t d = DLINK(x);
         DLINK(p) = d;
         ULINK(d) = p;
@@ -304,6 +304,7 @@ struct MCC {
     }
 
     void untweak(size_t a, size_t i) {
+        bool special = BOUND(i) == 0;
         int p = a <= num_items ? a : TOP(a);
         size_t x = a, y = p;
         size_t z = DLINK(p);
@@ -312,12 +313,13 @@ struct MCC {
         while (x != z) {
             ULINK(x) = y;
             ++k;
-            unhide(x);
+            if (!special) unhide(x);
             y = x;
             x = DLINK(x);
         }
         ULINK(z) = y;
         LEN(p) += k;
+        if (special) uncover(p);
     }
 
     void try_option(size_t x) {
@@ -391,11 +393,10 @@ struct MCC {
         std::vector<size_t> x(num_options);
         std::vector<size_t> ft(num_options);
 
-        size_t i;
         while (true) {
             // M3. [Choose i.]
             int theta = std::numeric_limits<int>::max();
-            i = RLINK(0);
+            size_t i = RLINK(0);
             for(size_t p = RLINK(0); p != 0; p = RLINK(p)) {
                 int lambda = LEN(p);
                 if (lambda > 1 && NAME(p)[0] == '#') lambda += num_options;
@@ -420,8 +421,9 @@ struct MCC {
 
                 // M5. [Possibly tweak x_l.]
                 bool leave_level = false;
-                if (BOUND(i) == 0 && SLACK(i) == 0 && x[l] == i) {
-                    leave_level = true;  // -> M8
+                LOG(2) << "x[" << l << "] = " << x[l] << ", i=" << i;
+                if (BOUND(i) == 0 && SLACK(i) == 0) {
+                    if  (x[l] == i) leave_level = true;  // -> M8
                 } else if ((BOUND(i) != 0 || SLACK(i) != 0) &&
                            LEN(i) <= (int)BOUND(i) - (int)SLACK(i)) {
                     leave_level = true;  // -> M8
@@ -441,6 +443,7 @@ struct MCC {
                     ++BOUND(i);
                 } else {
                     // M6. [Try x_l.]
+                    LOG(2) << "Trying x_" << l << " = " << x[l];
                     if (x[l] != i) try_option(x[l]);
                     ++l;
 
@@ -454,6 +457,7 @@ struct MCC {
                     // M9. [Leave level l.]
                     if (l == 0) return;
                     --l;
+                    LOG(2) << "l is now " << l;
                     if (x[l] <= num_items) {
                         i = x[l];
                         size_t p = LLINK(i);
@@ -470,6 +474,7 @@ struct MCC {
                         CHECK(static_cast<int>(i) == TOP(x[l]));
 
                         // M7. [Try again.]
+                        LOG(2) << "backtrack";
                         try_again(x[l]);
                         x[l] = DLINK(x[l]);
                         break;  // -> M5
