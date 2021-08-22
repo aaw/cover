@@ -93,8 +93,8 @@ struct MCC {
                 CHECK(false) << "Expected no more input after ']': " << *curr;
             }
         }
-        CHECK(*low >= 0) << "Bad low multiplicity for " << *curr;
-        CHECK(*high >= 0) << "Bad high multiplicity for " << *curr;
+        CHECK(*low >= 0) << "Bad low bound (" << *low << ") for " << *curr;
+        CHECK(*high >= 1) << "Bad high bound (" << *high << ") for " << *curr;
         CHECK(state == 0 || state == 3)
             << "Incomplete input for option with multiplicity: " << *curr;
         *curr = curr->substr(0, curr_size);
