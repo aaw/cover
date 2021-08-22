@@ -1,0 +1,1 @@
+* Handle lines longer than MAX_LINE_SIZE properly
