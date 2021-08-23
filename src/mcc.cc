@@ -375,6 +375,35 @@ struct MCC {
         }
     }
 
+    // Returns true iff backtracking was successful.
+    bool backtrack(size_t& l, size_t& i) {
+        while(true) {
+            // M9. [Leave level l.]
+            if (l == 0) return false;
+            --l;
+            if (choice[l] <= num_items) {
+                i = choice[l];
+                size_t p = LLINK(i);
+                size_t q = RLINK(i);
+                LLINK(q) = i;
+                RLINK(p) = i;
+
+                // M8. [Restore i.]
+                if (BOUND(i) == 0 && SLACK(i) == 0) uncover(i);
+                else untweak(ft[l], i);
+                ++BOUND(i);  // -> M9
+            } else {
+                i = TOP(choice[l]);
+                CHECK(static_cast<int>(i) == TOP(choice[l]));
+
+                // M7. [Try again.]
+                try_again(choice[l]);
+                choice[l] = DLINK(choice[l]);
+                return true;  // -> M5
+            }
+        }
+    }
+
     void visit(size_t l) {
         std::ostringstream oss;
         oss << "Solution: " << std::endl;
@@ -433,13 +462,16 @@ struct MCC {
             score[l] = theta;
             ft[l] = 0;
             LOG(2) << "Chose i=" << i << " (" << NAME(i) << ")";
-            if (theta == 0) INC(zero_theta);
-            // TODO: If the branching degree theta_i = 0, go to M9.
 
-            // M4. [Prepare to branch on i.]
-            choice[l] = DLINK(i);
-            if (--BOUND(i) == 0) cover(i);
-            if (BOUND(i) != 0 || SLACK(i) != 0) ft[l] = choice[l];
+            if (theta == 0) {
+                INC(zero_theta);
+                if (!backtrack(l, i)) return;
+            } else {
+                // M4. [Prepare to branch on i.]
+                choice[l] = DLINK(i);
+                if (--BOUND(i) == 0) cover(i);
+                if (BOUND(i) != 0 || SLACK(i) != 0) ft[l] = choice[l];
+            }
 
             while (true) {
                 LOG_EVERY_N_SECS_T(0, 1)
@@ -480,31 +512,7 @@ struct MCC {
                     visit(l);
                 }
 
-                while(true) {
-                    // M9. [Leave level l.]
-                    if (l == 0) return;
-                    --l;
-                    if (choice[l] <= num_items) {
-                        i = choice[l];
-                        size_t p = LLINK(i);
-                        size_t q = RLINK(i);
-                        LLINK(q) = i;
-                        RLINK(p) = i;
-
-                        // M8. [Restore i.]
-                        if (BOUND(i) == 0 && SLACK(i) == 0) uncover(i);
-                        else untweak(ft[l], i);
-                        ++BOUND(i);  // -> M9
-                    } else {
-                        i = TOP(choice[l]);
-                        CHECK(static_cast<int>(i) == TOP(choice[l]));
-
-                        // M7. [Try again.]
-                        try_again(choice[l]);
-                        choice[l] = DLINK(choice[l]);
-                        break;  // -> M5
-                    }
-                }
+                if (!backtrack(l, i)) return;
             }
         }
     }

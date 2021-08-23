@@ -1,5 +1,3 @@
-* put M9, M8, M7 into a backtrack routine, implement
-  early backtrack path after scoring.
 * re-enable sharp/non-sharp preferences heuristic.
 
 * Handle lines longer than MAX_LINE_SIZE properly.
