@@ -2,5 +2,4 @@
   early backtrack path after scoring.
 * re-enable sharp/non-sharp preferences heuristic.
 
-* make x, ft, score class member variables in mcc.
 * Handle lines longer than MAX_LINE_SIZE properly.

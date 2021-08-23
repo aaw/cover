@@ -40,6 +40,9 @@ inline size_t monus(size_t x, size_t y) {
 
 struct MCC {
     std::vector<Node> nodes;
+    std::vector<size_t> choice;
+    std::vector<size_t> ft;
+    std::vector<size_t> score;
     size_t z;  // Index of last spacer node.
     size_t num_items;
     size_t num_primary_items;
@@ -219,6 +222,10 @@ struct MCC {
 
         LOG(3) << "After parsing, memory is: " << debug_nodes();
         fclose(f);
+
+        choice = std::vector<size_t>(num_options);
+        ft = std::vector<size_t>(num_options);
+        score = std::vector<size_t>(num_options);
     }
 
     void hide(size_t p) {
@@ -368,11 +375,11 @@ struct MCC {
         }
     }
 
-    void visit(std::vector<size_t>& x, size_t l) {
+    void visit(size_t l) {
         std::ostringstream oss;
         oss << "Solution: " << std::endl;
         for (size_t j = 0; j < l; ++j) {
-            size_t r = x[j];
+            size_t r = choice[j];
             if (r <= num_items) continue;
             while (TOP(r) >= 0) ++r;
             oss << "  " << -TOP(r) << ": ";
@@ -384,15 +391,15 @@ struct MCC {
         LOG(1) << oss.str();
     }
 
-    double progress(std::vector<size_t>& x, std::vector<size_t>& ft,
-                    std::vector<size_t>& score, size_t l) {
+    double progress(size_t l) {
         double p = 0;
         double denom = 1;
         for (size_t j = 0; j < l; ++j) {
-            size_t i = x[j];
+            size_t i = choice[j];
             size_t c = i <= num_items ? i : TOP(i);
             size_t k = 1;
-            for(size_t q = ft[j] ? ft[j] : DLINK(c); q != x[j]; q = DLINK(q)) {
+            for(size_t q = ft[j] ? ft[j] : DLINK(c); q != choice[j];
+                q = DLINK(q)) {
                 ++k;
             }
             denom *= score[j];
@@ -406,9 +413,6 @@ struct MCC {
         // M1. [Initialize.]
         INITCOUNTER(solutions);
         size_t l = 0;
-        std::vector<size_t> x(num_options);
-        std::vector<size_t> ft(num_options);
-        std::vector<size_t> score(num_options);
 
         while (true) {
             // M3. [Choose i.]
@@ -433,25 +437,25 @@ struct MCC {
             // TODO: If the branching degree theta_i = 0, go to M9.
 
             // M4. [Prepare to branch on i.]
-            x[l] = DLINK(i);
+            choice[l] = DLINK(i);
             if (--BOUND(i) == 0) cover(i);
-            if (BOUND(i) != 0 || SLACK(i) != 0) ft[l] = x[l];
+            if (BOUND(i) != 0 || SLACK(i) != 0) ft[l] = choice[l];
 
             while (true) {
                 LOG_EVERY_N_SECS_T(0, 1)
                     << "sols: " << GETCOUNTER(solutions) << " done: "
-                    << std::setprecision(3) << progress(x,ft,score,l) << "%";
+                    << std::setprecision(3) << progress(l) << "%";
 
                 // M5. [Possibly tweak x_l.]
                 bool leave_level = false;
-                LOG(2) << "x[" << l << "] = " << x[l] << ", i=" << i;
+                LOG(2) << "choice[" << l << "] = " << choice[l] << ", i=" << i;
                 if (BOUND(i) == 0 && SLACK(i) == 0) {
-                    if  (x[l] == i) leave_level = true;  // -> M8
+                    if  (choice[l] == i) leave_level = true;  // -> M8
                 } else if ((BOUND(i) != 0 || SLACK(i) != 0) &&
                            LEN(i) <= (int)BOUND(i) - (int)SLACK(i)) {
                     leave_level = true;  // -> M8
-                } else if (x[l] != i) {
-                    tweak(x[l], i);
+                } else if (choice[l] != i) {
+                    tweak(choice[l], i);
                 } else if (BOUND(i) != 0) {
                     size_t p = LLINK(i);
                     size_t q = RLINK(i);
@@ -466,22 +470,22 @@ struct MCC {
                     ++BOUND(i);
                 } else {
                     // M6. [Try x_l.]
-                    LOG(2) << "Trying x_" << l << " = " << x[l];
-                    if (x[l] != i) try_option(x[l]);
+                    LOG(2) << "Trying x_" << l << " = " << choice[l];
+                    if (choice[l] != i) try_option(choice[l]);
                     ++l;
 
                     // M2. [Enter level l.]
                     if (RLINK(0) != 0) break;  // -> M3
                     INC(solutions);
-                    visit(x, l);
+                    visit(l);
                 }
 
                 while(true) {
                     // M9. [Leave level l.]
                     if (l == 0) return;
                     --l;
-                    if (x[l] <= num_items) {
-                        i = x[l];
+                    if (choice[l] <= num_items) {
+                        i = choice[l];
                         size_t p = LLINK(i);
                         size_t q = RLINK(i);
                         LLINK(q) = i;
@@ -492,12 +496,12 @@ struct MCC {
                         else untweak(ft[l], i);
                         ++BOUND(i);  // -> M9
                     } else {
-                        i = TOP(x[l]);
-                        CHECK(static_cast<int>(i) == TOP(x[l]));
+                        i = TOP(choice[l]);
+                        CHECK(static_cast<int>(i) == TOP(choice[l]));
 
                         // M7. [Try again.]
-                        try_again(x[l]);
-                        x[l] = DLINK(x[l]);
+                        try_again(choice[l]);
+                        choice[l] = DLINK(choice[l]);
                         break;  // -> M5
                     }
                 }
