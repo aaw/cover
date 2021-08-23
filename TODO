@@ -1,3 +1,6 @@
-* Handle lines longer than MAX_LINE_SIZE properly
-* re-enable sharp/non-sharp preferences heuristic
-* make x, ft, score class member variables in mcc
+* put M9, M8, M7 into a backtrack routine, implement
+  early backtrack path after scoring.
+* re-enable sharp/non-sharp preferences heuristic.
+
+* make x, ft, score class member variables in mcc.
+* Handle lines longer than MAX_LINE_SIZE properly.
