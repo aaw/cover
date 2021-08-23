@@ -34,6 +34,10 @@ struct Node {
 #define BOUND(i) (nodes[i].bound)
 #define MAX_LINE_SIZE (100000)
 
+inline size_t monus(size_t x, size_t y) {
+    return x > y ? x - y : 0;
+}
+
 struct MCC {
     std::vector<Node> nodes;
     size_t z;  // Index of last spacer node.
@@ -380,16 +384,18 @@ struct MCC {
         LOG(1) << oss.str();
     }
 
-    double progress(std::vector<size_t>& x, size_t l) {
+    double progress(std::vector<size_t>& x, std::vector<size_t>& ft,
+                    std::vector<size_t>& score, size_t l) {
         double p = 0;
         double denom = 1;
         for (size_t j = 0; j < l; ++j) {
-            size_t i = TOP(x[j]);
+            size_t i = x[j];
+            size_t c = i <= num_items ? i : TOP(i);
             size_t k = 1;
-            for(size_t q = DLINK(i); q != i && q != x[j]; q = DLINK(q)) {
+            for(size_t q = ft[j] ? ft[j] : DLINK(c); q != x[j]; q = DLINK(q)) {
                 ++k;
             }
-            denom *= LEN(i);
+            denom *= score[j];
             p += (k - 1) / denom;
         }
         p += 1.0 / (2.0 * denom);
@@ -402,21 +408,28 @@ struct MCC {
         size_t l = 0;
         std::vector<size_t> x(num_options);
         std::vector<size_t> ft(num_options);
+        std::vector<size_t> score(num_options);
 
         while (true) {
             // M3. [Choose i.]
             int theta = std::numeric_limits<int>::max();
             size_t i = RLINK(0);
             for(size_t p = RLINK(0); p != 0; p = RLINK(p)) {
-                int lambda = LEN(p);
-                if (lambda > 1 && NAME(p)[0] != '#') lambda += num_options;
-                if (lambda < theta) {
-                    theta = lambda;
+                int s = monus(LEN(p) + 1, monus(BOUND(p), SLACK(p)));
+                // TODO: re-enable sharp/non-sharp preferences heuristic,
+                // roughly: if (s > 1 && NAME(p)[0] != '#') s += num_options;
+                if (s < theta ||
+                    (s == theta && SLACK(p) < SLACK(i)) ||
+                    (s == theta && SLACK(p) == SLACK(i) && LEN(p) > LEN(i))) {
+                    theta = s;
                     i = p;
                     if (theta == 0) break;
                 }
             }
+            score[l] = theta;
+            ft[l] = 0;
             LOG(2) << "Chose i=" << i << " (" << NAME(i) << ")";
+            if (theta == 0) INC(zero_theta);
             // TODO: If the branching degree theta_i = 0, go to M9.
 
             // M4. [Prepare to branch on i.]
@@ -427,7 +440,7 @@ struct MCC {
             while (true) {
                 LOG_EVERY_N_SECS_T(0, 1)
                     << "sols: " << GETCOUNTER(solutions) << " done: "
-                    << std::setprecision(3) << progress(x,l) << "%";
+                    << std::setprecision(3) << progress(x,ft,score,l) << "%";
 
                 // M5. [Possibly tweak x_l.]
                 bool leave_level = false;
@@ -467,7 +480,6 @@ struct MCC {
                     // M9. [Leave level l.]
                     if (l == 0) return;
                     --l;
-                    LOG(2) << "l is now " << l;
                     if (x[l] <= num_items) {
                         i = x[l];
                         size_t p = LLINK(i);
@@ -484,7 +496,6 @@ struct MCC {
                         CHECK(static_cast<int>(i) == TOP(x[l]));
 
                         // M7. [Try again.]
-                        LOG(2) << "backtrack";
                         try_again(x[l]);
                         x[l] = DLINK(x[l]);
                         break;  // -> M5
