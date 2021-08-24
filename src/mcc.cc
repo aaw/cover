@@ -404,6 +404,24 @@ struct MCC {
         }
     }
 
+    bool should_try(size_t l, size_t i) {
+        // M5. [Possibly tweak x_l.]
+        if (BOUND(i) == 0 && SLACK(i) == 0) {
+            if  (choice[l] == i) return false;
+        } else if ((BOUND(i) != 0 || SLACK(i) != 0) &&
+                   LEN(i) <= (int)BOUND(i) - (int)SLACK(i)) {
+            return false;
+        } else if (choice[l] != i) {
+            tweak(choice[l], i);
+        } else if (BOUND(i) != 0) {
+            size_t p = LLINK(i);
+            size_t q = RLINK(i);
+            RLINK(p) = q;
+            LLINK(q) = p;
+        }
+        return true;
+    }
+
     void visit(size_t l) {
         std::ostringstream oss;
         oss << "Solution: " << std::endl;
@@ -478,29 +496,7 @@ struct MCC {
                     << "sols: " << GETCOUNTER(solutions) << " done: "
                     << std::setprecision(3) << progress(l) << "%";
 
-                // M5. [Possibly tweak x_l.]
-                bool leave_level = false;
-                LOG(2) << "choice[" << l << "] = " << choice[l] << ", i=" << i;
-                if (BOUND(i) == 0 && SLACK(i) == 0) {
-                    if  (choice[l] == i) leave_level = true;  // -> M8
-                } else if ((BOUND(i) != 0 || SLACK(i) != 0) &&
-                           LEN(i) <= (int)BOUND(i) - (int)SLACK(i)) {
-                    leave_level = true;  // -> M8
-                } else if (choice[l] != i) {
-                    tweak(choice[l], i);
-                } else if (BOUND(i) != 0) {
-                    size_t p = LLINK(i);
-                    size_t q = RLINK(i);
-                    RLINK(p) = q;
-                    LLINK(q) = p;
-                }
-
-                if (leave_level) {
-                    // M8. [Restore i.]
-                    if (BOUND(i) == 0 && SLACK(i) == 0) uncover(i);
-                    else untweak(ft[l], i);
-                    ++BOUND(i);
-                } else {
+                if (should_try(l, i)) {
                     // M6. [Try x_l.]
                     LOG(2) << "Trying x_" << l << " = " << choice[l];
                     if (choice[l] != i) try_option(choice[l]);
@@ -510,6 +506,11 @@ struct MCC {
                     if (RLINK(0) != 0) break;  // -> M3
                     INC(solutions);
                     visit(l);
+                } else {
+                    // M8. [Restore i.]
+                    if (BOUND(i) == 0 && SLACK(i) == 0) uncover(i);
+                    else untweak(ft[l], i);
+                    ++BOUND(i);
                 }
 
                 if (!backtrack(l, i)) return;
