@@ -422,6 +422,28 @@ struct MCC {
         return true;
     }
 
+    size_t choose(size_t l) {
+        int theta = std::numeric_limits<int>::max();
+        size_t i = RLINK(0);
+        for(size_t p = RLINK(0); p != 0; p = RLINK(p)) {
+            int s = monus(LEN(p) + 1, monus(BOUND(p), SLACK(p)));
+            // TODO: re-enable sharp/non-sharp preferences heuristic,
+            // roughly: if (s > 1 && NAME(p)[0] != '#') s += num_options;
+            if (s < theta ||
+                (s == theta && SLACK(p) < SLACK(i)) ||
+                (s == theta && SLACK(p) == SLACK(i) && LEN(p) > LEN(i))) {
+                theta = s;
+                i = p;
+                if (theta == 0) break;
+            }
+        }
+        score[l] = theta;
+        ft[l] = 0;
+        LOG(2) << "Chose i=" << i << " (" << NAME(i) << ")";
+        return i;
+    }
+
+
     void visit(size_t l) {
         std::ostringstream oss;
         oss << "Solution: " << std::endl;
@@ -463,25 +485,8 @@ struct MCC {
 
         while (true) {
             // M3. [Choose i.]
-            int theta = std::numeric_limits<int>::max();
-            size_t i = RLINK(0);
-            for(size_t p = RLINK(0); p != 0; p = RLINK(p)) {
-                int s = monus(LEN(p) + 1, monus(BOUND(p), SLACK(p)));
-                // TODO: re-enable sharp/non-sharp preferences heuristic,
-                // roughly: if (s > 1 && NAME(p)[0] != '#') s += num_options;
-                if (s < theta ||
-                    (s == theta && SLACK(p) < SLACK(i)) ||
-                    (s == theta && SLACK(p) == SLACK(i) && LEN(p) > LEN(i))) {
-                    theta = s;
-                    i = p;
-                    if (theta == 0) break;
-                }
-            }
-            score[l] = theta;
-            ft[l] = 0;
-            LOG(2) << "Chose i=" << i << " (" << NAME(i) << ")";
-
-            if (theta == 0) {
+            size_t i = choose(l);
+            if (score[l] == 0) {
                 INC(zero_theta);
                 if (!backtrack(l, i)) return;
             } else {
