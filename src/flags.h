@@ -7,6 +7,7 @@
 #include <string>
 
 #include "logging.h"
+#include "params.h"
 
 // To add and use a new flag:
 // (1) Declare it and its default below globally as FLAGS_xxx = default.
@@ -17,6 +18,7 @@
 
 int FLAGS_verbosity = 1;
 bool FLAGS_counters = true;
+std::string FLAGS_params = "";
 
 bool parse_flags(int argc, char* argv[], int* option_index) {
     *option_index = 0;
@@ -24,11 +26,12 @@ bool parse_flags(int argc, char* argv[], int* option_index) {
 
     struct option long_options[] = {
         { "verbosity",      required_argument,  NULL, 'v' },
+        { "params",         required_argument,  NULL, 'p' },
         { "counters",       no_argument,        NULL, 'c' },
         { 0, 0, 0, 0}
     };
 
-    char optstring[] = "v:c";
+    char optstring[] = "v:p:c";
 
     while (1) {
         c = getopt_long(argc, argv, optstring, long_options, nullptr);
@@ -41,6 +44,10 @@ bool parse_flags(int argc, char* argv[], int* option_index) {
             break;
         case 'c':
             FLAGS_counters = true;
+            break;
+        case 'p':
+            FLAGS_params = optarg;
+            Params::singleton().parse(FLAGS_params);
             break;
         default:
             return false;

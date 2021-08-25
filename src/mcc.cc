@@ -1,6 +1,7 @@
 #include "logging.h"
 #include "counters.h"
 #include "flags.h"
+#include "params.h"
 
 #include <cctype>
 #include <iomanip>
@@ -9,6 +10,11 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
+
+DEFINE_PARAM(prefer_sharp, 0, "When branching, prefer items with a # prefix");
+
+DEFINE_PARAM(prefer_unsharp, 0,
+             "When branching, prefer items without a # prefix");
 
 struct Node {
     std::string name;
@@ -418,8 +424,10 @@ struct MCC {
         INC(choices);
         for(size_t p = RLINK(0); p != 0; p = RLINK(p)) {
             int s = monus(LEN(p) + 1, monus(BOUND(p), SLACK(p)));
-            // TODO: re-enable sharp/non-sharp preferences heuristic,
-            // roughly: if (s > 1 && NAME(p)[0] != '#') s += num_options;
+            if ((PARAM_prefer_sharp && s > 1 && NAME(p)[0] != '#') ||
+                (PARAM_prefer_unsharp && s > 1 && NAME(p)[0] == '#')) {
+                s += num_options;
+            }
             if (s < theta ||
                 (s == theta && SLACK(p) < SLACK(i)) ||
                 (s == theta && SLACK(p) == SLACK(i) && LEN(p) > LEN(i))) {
@@ -522,6 +530,8 @@ int main(int argc, char** argv) {
     CHECK(parse_flags(argc, argv, &oidx))
         << "Usage: " << argv[0] << " [-vV] <filename>\n"
         << "V: verbosity (>= 2 prints solutions)\n";
+    CHECK(!PARAM_prefer_sharp || !PARAM_prefer_unsharp) <<
+        "Both prefer_sharp and prefer_unsharp are set. Use only one.";
     init_counters();
     MCC(argv[oidx]).solve();
     return 0;

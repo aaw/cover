@@ -14,7 +14,7 @@ bin/xc: src/xc.cc src/logging.h src/counters.h src/flags.h
 bin/xcc: src/xcc.cc src/logging.h src/counters.h src/flags.h
 	g++ $(CPPFLAGS) -o bin/xcc src/xcc.cc $(LDLIBS)
 
-bin/mcc: src/mcc.cc src/logging.h src/counters.h src/flags.h
+bin/mcc: src/mcc.cc src/logging.h src/counters.h src/flags.h src/params.h
 	g++ $(CPPFLAGS) -o bin/mcc src/mcc.cc $(LDLIBS)
 
 clean:
