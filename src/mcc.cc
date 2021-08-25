@@ -229,7 +229,6 @@ struct MCC {
     }
 
     void hide(size_t p) {
-        INC(hide);
         for(size_t q = p + 1; q != p;) {
             if (COLOR(q) < 0) { ++q; continue; }
             int x = TOP(q);
@@ -243,7 +242,6 @@ struct MCC {
     }
 
     void unhide(size_t p) {
-        INC(unhide);
         for(size_t q = p - 1; q != p;) {
             if (COLOR(q) < 0) { --q; continue; }
             int x = TOP(q);
@@ -257,7 +255,6 @@ struct MCC {
     }
 
     void cover(size_t i) {
-        INC(cover);
         for (size_t p = DLINK(i); p != i;) {
             hide(p);
             p = DLINK(p);
@@ -268,7 +265,6 @@ struct MCC {
     }
 
     void uncover(size_t i) {
-        INC(uncover);
         size_t l = LLINK(i), r = RLINK(i);
         RLINK(l) = i;
         LLINK(r) = i;
@@ -279,7 +275,6 @@ struct MCC {
     }
 
     void purify(size_t p) {
-        INC(purify);
         int c = COLOR(p), i = TOP(p);
         CHECK(i >= 0) << "Bad top value for " << p;
         COLOR(i) = c;
@@ -290,7 +285,6 @@ struct MCC {
     }
 
     void unpurify(size_t p) {
-        INC(unpurify);
         int c = COLOR(p), i = TOP(p);
         CHECK(i >= 0) << "Bad top value for " << p;
         for(size_t q = ULINK(i); q != static_cast<size_t>(i); q = ULINK(q)) {
@@ -300,23 +294,20 @@ struct MCC {
     }
 
     void commit(size_t p, size_t j) {
-        INC(commit);
         if (COLOR(p) == 0) cover(j);
         if (COLOR(p) > 0) purify(p);
     }
 
     void uncommit(size_t p, size_t j) {
-        INC(uncommit);
         if (COLOR(p) == 0) uncover(j);
         if (COLOR(p) > 0) unpurify(p);
     }
 
     void tweak(size_t x, size_t p) {
-        INC(tweak);
         CHECK(x == DLINK(p));
         CHECK(p == ULINK(x));
-        if (BOUND(p) != 0) hide(x);
         CHECK(COLOR(x) >= 0) << "Attempt to tweak non-primary?";
+        if (BOUND(p) != 0) hide(x);
         size_t d = DLINK(x);
         DLINK(p) = d;
         ULINK(d) = p;
@@ -324,7 +315,6 @@ struct MCC {
     }
 
     void untweak(size_t a, size_t i) {
-        INC(untweak);
         bool special = BOUND(i) == 0;
         int p = a <= num_items ? a : TOP(a);
         size_t x = a, y = p;
@@ -425,6 +415,7 @@ struct MCC {
     size_t choose(size_t l) {
         int theta = std::numeric_limits<int>::max();
         size_t i = RLINK(0);
+        INC(choices);
         for(size_t p = RLINK(0); p != 0; p = RLINK(p)) {
             int s = monus(LEN(p) + 1, monus(BOUND(p), SLACK(p)));
             // TODO: re-enable sharp/non-sharp preferences heuristic,
@@ -437,6 +428,7 @@ struct MCC {
                 if (theta == 0) break;
             }
         }
+        INC(score, theta);
         score[l] = theta;
         ft[l] = 0;
         LOG(2) << "Chose i=" << i << " (" << NAME(i) << ")";
@@ -487,7 +479,7 @@ struct MCC {
             // M3. [Choose i.]
             size_t i = choose(l);
             if (score[l] == 0) {
-                INC(zero_theta);
+                INC(score_zero);
                 if (!backtrack(l, i)) return;
             } else {
                 // M4. [Prepare to branch on i.]
