@@ -49,7 +49,6 @@ struct MCC {
     std::vector<size_t> choice;
     std::vector<size_t> ft;
     std::vector<size_t> score;
-    size_t z;  // Index of last spacer node.
     size_t num_items;
     size_t num_primary_items;
     size_t num_options;
@@ -219,7 +218,6 @@ struct MCC {
             p = p+j+1;
             TOP(p) = -m;
             ULINK(p) = p-j;
-            z = p;
             seen.clear();
             j = 0;
         }
