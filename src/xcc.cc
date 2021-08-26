@@ -32,7 +32,6 @@ struct Node {
 struct XCC {
     std::vector<Node> nodes;
     std::vector<size_t> choice;
-    size_t z;  // Index of last spacer node.
     size_t num_items;
     size_t num_primary_items;
     size_t num_options;
@@ -168,7 +167,6 @@ struct XCC {
             p = p+j+1;
             TOP(p) = -m;
             ULINK(p) = p-j;
-            z = p;
             seen.clear();
             j = 0;
         }

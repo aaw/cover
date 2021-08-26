@@ -29,9 +29,9 @@ struct Node {
 
 struct XC {
     std::vector<Node> nodes;
-    size_t z;  // Index of last spacer node.
-    size_t y;  // Index of last primary node.
+    std::vector<size_t> choice;
     size_t num_items;
+    size_t num_primary_items;
     size_t num_options;
 
     std::string debug_nodes() {
@@ -56,7 +56,7 @@ struct XC {
         // I1. [Read the first line.]
         std::unordered_map<std::string, size_t> header;
         nodes.push_back(Node());  // Header
-        y = std::numeric_limits<size_t>::max();
+        num_primary_items = std::numeric_limits<size_t>::max();
         while(fgets(s, MAX_LINE_SIZE, f) != NULL) {
             int offset = 0, r = 0;
             std::string curr;
@@ -69,7 +69,7 @@ struct XC {
                     "Duplicate item name: " << ss;
                 header[curr] = nodes.size();
                 if (curr == "|") {
-                    y = nodes.size() - 1;
+                    num_primary_items = nodes.size() - 1;
                     continue;
                 }
                 Node n;
@@ -81,17 +81,18 @@ struct XC {
             if (curr != "\\" && !header.empty()) break;
         }
         num_items = header.size();
-        LOG(1) << "Parsed " << num_items << " items";
+        LOG(1) << "Parsed " << num_items << " items (" << num_primary_items
+               << " primary)";
 
         // I2. [Finish the horizontal list.]
-        if (y == std::numeric_limits<size_t>::max()) {
-            y = nodes.size() - 1;
+        if (num_primary_items == std::numeric_limits<size_t>::max()) {
+            num_primary_items = nodes.size() - 1;
         } else {
-            nodes[y+1].llink = nodes.size()-1;
-            nodes.back().rlink = y+1;
+            nodes[num_primary_items+1].llink = nodes.size()-1;
+            nodes.back().rlink = num_primary_items+1;
         }
-        nodes[y].rlink = 0;
-        nodes[0].llink = y;
+        nodes[num_primary_items].rlink = 0;
+        nodes[0].llink = num_primary_items;
 
         // I3. [Prepare for options.]
         for (size_t i = 1; i < nodes.size(); ++i) {
@@ -142,7 +143,6 @@ struct XC {
             p = p+j+1;
             TOP(p) = -m;
             ULINK(p) = p-j;
-            z = p;
             seen.clear();
             j = 0;
         }
@@ -150,6 +150,8 @@ struct XC {
 
         LOG(3) << "After parsing, memory is: " << debug_nodes();
         fclose(f);
+
+        choice = std::vector<size_t>(num_options);
     }
 
     void hide(size_t p) {
@@ -196,11 +198,49 @@ struct XC {
         }
     }
 
-    void visit(std::vector<size_t>& x, size_t l) {
+    void try_once(size_t l) {
+        for(size_t p = choice[l] + 1; p != choice[l];) {
+            int j = TOP(p);
+            if (j <= 0) { p = ULINK(p); }
+            else {
+                cover(j);
+                ++p;
+            }
+        }
+    }
+
+    void try_again(size_t l) {
+        for(size_t p = choice[l] - 1; p != choice[l];) {
+            int j = TOP(p);
+            if (j <= 0) { p = DLINK(p); }
+            else {
+                uncover(j);
+                --p;
+            }
+        }
+    }
+
+    size_t choose() {
+        int theta = std::numeric_limits<int>::max();
+        size_t i = RLINK(0);
+        for(size_t p = RLINK(0); p != 0; p = RLINK(p)) {
+            int lambda = LEN(p);
+            if (lambda > 1 && NAME(p)[0] == '#') lambda += num_options;
+            if (lambda < theta) {
+                theta = lambda;
+                i = p;
+                if (theta == 0) break;
+            }
+        }
+        LOG(2) << "Chose i=" << i << " (" << NAME(i) << ")";
+        return i;
+    }
+
+    void visit(size_t l) {
         std::ostringstream oss;
         oss << "Solution: " << std::endl;
         for (size_t j = 0; j < l; ++j) {
-            size_t r = x[j];
+            size_t r = choice[j];
             while (TOP(r) >= 0) ++r;
             oss << "  " << -TOP(r) << ": ";
             for(size_t p = ULINK(r); TOP(p) > 0; ++p) {
@@ -211,13 +251,13 @@ struct XC {
         LOG(1) << oss.str();
     }
 
-    double progress(std::vector<size_t>& x, size_t l) {
+    double progress(size_t l) {
         double p = 0;
         double denom = 1;
         for (size_t j = 0; j < l; ++j) {
-            size_t i = TOP(x[j]);
+            size_t i = TOP(choice[j]);
             size_t k = 1;
-            for(size_t q = DLINK(i); q != i && q != x[j]; q = DLINK(q)) {
+            for(size_t q = DLINK(i); q != i && q != choice[j]; q = DLINK(q)) {
                 ++k;
             }
             denom *= LEN(i);
@@ -231,70 +271,42 @@ struct XC {
         // X1. [Initialize.]
         INITCOUNTER(solutions);
         size_t l = 0;
-        std::vector<size_t> x(num_options);
 
         while (true) {
             // X3. [Choose i.]
-            int theta = std::numeric_limits<int>::max();
-            size_t i = RLINK(0);
-            for(size_t p = RLINK(0); p != 0; p = RLINK(p)) {
-                int lambda = LEN(p);
-                if (lambda > 1 && NAME(p)[0] == '#') lambda += num_options;
-                if (lambda < theta) {
-                    theta = lambda;
-                    i = p;
-                    if (theta == 0) break;
-                }
-            }
-            LOG(2) << "Chose i=" << i << " (" << NAME(i) << ")";
+            size_t i = choose();
 
             // X4. [Cover i.]
             cover(i);
-            x[l] = DLINK(i);
+            choice[l] = DLINK(i);
 
             while (true) {
                 LOG_EVERY_N_SECS_T(0, 1)
                     << "sols: " << GETCOUNTER(solutions) << " done: "
-                    << std::setprecision(3) << progress(x,l) << "%";
+                    << std::setprecision(3) << progress(l) << "%";
 
                 // X5. [Try x_l.]
-                LOG(2) << "Trying x_" << l << " = " << x[l];
-                if (x[l] == i) {
+                LOG(2) << "Trying x_" << l << " = " << choice[l];
+                if (choice[l] == i) {
                     // X7. [Backtrack.]
                     uncover(i);
-                    // X8. [Leave level l.]
-                    if (l == 0) return;
-                    --l;
                 } else {
-                    for(size_t p = x[l] + 1; p != x[l];) {
-                        int j = TOP(p);
-                        if (j <= 0) { p = ULINK(p); }
-                        else {
-                            cover(j);
-                            ++p;
-                        }
-                    }
+                    try_once(l);
                     ++l;
                     // X2. [Enter level l.]
                     if (RLINK(0) != 0) break; // -> X3
                     INC(solutions);
-                    visit(x, l);
-                    // X8. [Leave level l.]
-                    if (l == 0) return;
-                    --l;
+                    visit(l);
                 }
 
+                // X8. [Leave level l.]
+                if (l == 0) return;
+                --l;
+
                 // X6 [Try again.]
-                for(size_t p = x[l] - 1; p != x[l];) {
-                    int j = TOP(p);
-                    if (j <= 0) { p = DLINK(p); }
-                    else {
-                        uncover(j);
-                        --p;
-                    }
-                }
-                i = TOP(x[l]);
-                x[l] = DLINK(x[l]);
+                try_again(l);
+                i = TOP(choice[l]);
+                choice[l] = DLINK(choice[l]);
             }
         }
     }
