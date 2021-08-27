@@ -34,5 +34,5 @@ if __name__ == '__main__':
         for ss in decode(sol):
             print(ss)
     except AssertionError:
-        print('Usage: "encode-sudoku.py <partial-solution>"')
+        print('Usage: "decode-sudoku.py <partial-solution>"')
         raise
