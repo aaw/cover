@@ -95,11 +95,10 @@ def decode(n):
     b = None
     N = n*(n+1)//2
     i = 0
-    print("N = %s" % N)
     for line in sys.stdin:
         line = line.rstrip()
         if re.match('.*Solution:', line):
-            if b is not None: yield pretty_print_board(b)
+            if b is not None: yield b
             i = 1
             b = [[(0,0)]*(2*N+2) for row in range(N+2)]
             continue
@@ -113,14 +112,14 @@ def decode(n):
         for coord in cs:
             b[coord[0]][coord[1]] = (i,size)
         i += 1
-    if b is not None: yield pretty_print_board(b)
+    if b is not None: yield b
 
 if __name__ == '__main__':
     try:
         assert(len(sys.argv) == 2), "Wrong number of flags"
         n = int(sys.argv[1])
-        for ss in decode(n):
-            print(ss)
+        for b in decode(n):
+            pretty_print_board(b)
             print()
     except AssertionError:
         print('Usage: {} rows cols'.format(sys.argv[0]))
