@@ -72,7 +72,7 @@ struct XC {
                 if (curr == "\\") break;
                 offset += r;
                 CHECK(header.find(curr) == header.end()) <<
-                    "Duplicate item name: " << ss;
+                    "Duplicate item name: '" << ss << "'";
                 header[curr] = nodes.size();
                 if (curr == "|") {
                     num_primary_items = nodes.size() - 1;
@@ -123,9 +123,9 @@ struct XC {
                 offset += r;
                 ++j;
                 size_t i = header[curr];
-                CHECK(i > 0) << "Item " << curr << " not in header";
+                CHECK(i > 0) << "Item '" << curr << "' not in header";
                 CHECK(seen.find(curr) == seen.end()) <<
-                    "Duplicate item " << curr;
+                    "Duplicate item '" << curr << "'";
                 seen.insert(curr);
                 LEN(i)++;
                 size_t q = ULINK(i);

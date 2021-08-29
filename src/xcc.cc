@@ -90,7 +90,7 @@ struct XCC {
                 if (curr == "\\") break;
                 offset += r;
                 CHECK(header.find(curr) == header.end()) <<
-                    "Duplicate item name: " << ss;
+                    "Duplicate item name: '" << ss << "'";
                 if (curr == "|") {
                     num_primary_items = nodes.size() - 1;
                     continue;
@@ -144,11 +144,11 @@ struct XCC {
                 offset += r;
                 ++j;
                 size_t i = header[curr];
-                CHECK(i > 0) << "Item " << curr << " not in header";
+                CHECK(i > 0) << "Item '" << curr << "' not in header";
                 CHECK(i >= num_primary_items || cnum == 0) <<
                     "Color can't be assigned to primary item (" << ss << ")";
                 CHECK(seen.find(curr) == seen.end()) <<
-                    "Duplicate item " << curr;
+                    "Duplicate item '" << curr << "'";
                 seen.insert(curr);
                 LEN(i)++;
                 size_t q = ULINK(i);
