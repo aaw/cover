@@ -123,6 +123,8 @@ struct MCC {
         nodes.push_back(Node());  // Header
         num_primary_items = std::numeric_limits<size_t>::max();
         while(fgets(s, MAX_LINE_SIZE, f) != NULL) {
+            CHECK(strlen(s) < MAX_LINE_SIZE-1 || s[strlen(s)-1] == '\n') <<
+                "Input line too long. Recompile with larger MAX_LINE_SIZE.";
             int offset = 0, r = 0;
             std::string curr;
             while (sscanf(s + offset, " %s %n", ss, &r) > 0) {
@@ -179,6 +181,8 @@ struct MCC {
         size_t j = 0;
 
         while(fgets(s, MAX_LINE_SIZE, f) != NULL) {
+            CHECK(strlen(s) < MAX_LINE_SIZE-1 || s[strlen(s)-1] == '\n') <<
+                "Input line too long. Recompile with larger MAX_LINE_SIZE.";
             int offset = 0, r = 0, cnum = 0;
             std::string curr;
             while (sscanf(s + offset, " %s %n", ss, &r) > 0) {

@@ -1,3 +1,1 @@
-* re-enable sharp/non-sharp preferences heuristic.
 
-* Handle lines longer than MAX_LINE_SIZE properly.
