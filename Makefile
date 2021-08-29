@@ -8,10 +8,10 @@ RM=rm -f
 
 all: bin/xc bin/xcc bin/mcc
 
-bin/xc: src/xc.cc src/logging.h src/counters.h src/flags.h
+bin/xc: src/xc.cc src/logging.h src/counters.h src/flags.h src/params.h
 	g++ $(CPPFLAGS) -o bin/xc src/xc.cc $(LDLIBS)
 
-bin/xcc: src/xcc.cc src/logging.h src/counters.h src/flags.h
+bin/xcc: src/xcc.cc src/logging.h src/counters.h src/flags.h src/params.h
 	g++ $(CPPFLAGS) -o bin/xcc src/xcc.cc $(LDLIBS)
 
 bin/mcc: src/mcc.cc src/logging.h src/counters.h src/flags.h src/params.h

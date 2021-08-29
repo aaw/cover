@@ -1,6 +1,7 @@
 #include "logging.h"
 #include "counters.h"
 #include "flags.h"
+#include "params.h"
 
 #include <iomanip>
 #include <string>
@@ -8,6 +9,11 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
+
+DEFINE_PARAM(prefer_sharp, 0, "When branching, prefer items with a # prefix");
+
+DEFINE_PARAM(prefer_unsharp, 0,
+             "When branching, prefer items without a # prefix");
 
 struct Node {
     std::string name;
@@ -281,7 +287,10 @@ struct XCC {
         size_t i = RLINK(0);
         for(size_t p = RLINK(0); p != 0; p = RLINK(p)) {
             int lambda = LEN(p);
-            if (lambda > 1 && NAME(p)[0] == '#') lambda += num_options;
+            if ((PARAM_prefer_sharp && lambda > 1 && NAME(p)[0] != '#') ||
+                (PARAM_prefer_unsharp && lambda > 1 && NAME(p)[0] == '#')) {
+                lambda += num_options;
+            }
             if (lambda < theta) {
                 theta = lambda;
                 i = p;
@@ -374,6 +383,8 @@ int main(int argc, char** argv) {
     CHECK(parse_flags(argc, argv, &oidx))
         << "Usage: " << argv[0] << " [-vV] <filename>\n"
         << "V: verbosity (>= 2 prints solutions)\n";
+    CHECK(!PARAM_prefer_sharp || !PARAM_prefer_unsharp) <<
+        "Both prefer_sharp and prefer_unsharp are set. Use only one.";
     init_counters();
     XCC(argv[oidx]).solve();
     return 0;
