@@ -87,18 +87,18 @@ struct XC {
             if (curr != "\\" && !header.empty()) break;
         }
         num_items = header.size();
-        LOG(1) << "Parsed " << num_items << " items (" << num_primary_items
-               << " primary)";
 
         // I2. [Finish the horizontal list.]
         if (num_primary_items == std::numeric_limits<size_t>::max()) {
             num_primary_items = nodes.size() - 1;
         } else {
-            nodes[num_primary_items+1].llink = nodes.size()-1;
-            nodes.back().rlink = num_primary_items+1;
+            nodes[num_primary_items + 1].llink = nodes.size() - 1;
+            nodes.back().rlink = num_primary_items + 1;
         }
         nodes[num_primary_items].rlink = 0;
         nodes[0].llink = num_primary_items;
+        LOG(1) << "Parsed " << num_items << " items (" << num_primary_items
+               << " primary)";
 
         // I3. [Prepare for options.]
         for (size_t i = 1; i < nodes.size(); ++i) {
