@@ -49,6 +49,7 @@ struct MCC {
     std::vector<size_t> choice;
     std::vector<size_t> ft;
     std::vector<size_t> score;
+    std::vector<std::string> colors;  // 1-indexed.
     size_t num_items;
     size_t num_primary_items;
     size_t num_options;
@@ -176,7 +177,7 @@ struct MCC {
 
         num_options = 0;
         std::unordered_set<std::string> seen;
-        std::unordered_map<std::string, int> colors;
+        std::unordered_map<std::string, int> color_ids;
         int next_color = 1;
         size_t j = 0;
 
@@ -186,7 +187,7 @@ struct MCC {
             int offset = 0, r = 0, cnum = 0;
             std::string curr;
             while (sscanf(s + offset, " %s %n", ss, &r) > 0) {
-                cnum = color_parse(ss, colors, next_color, &curr);
+                cnum = color_parse(ss, color_ids, next_color, &curr);
                 next_color = std::max(next_color, cnum + 1);
                 if (curr[0] == '/' && curr.size() > 1 && curr[1] == '/') break;
                 if (curr == "\\") break;
@@ -225,7 +226,7 @@ struct MCC {
             seen.clear();
             j = 0;
         }
-        LOG(1) << "Parsed " << colors.size() << " colors";
+        LOG(1) << "Parsed " << color_ids.size() << " colors";
         LOG(1) << "Parsed " << num_options << " options";
 
         LOG(3) << "After parsing, memory is: " << debug_nodes();
@@ -234,6 +235,8 @@ struct MCC {
         choice = std::vector<size_t>(num_options);
         ft = std::vector<size_t>(num_options);
         score = std::vector<size_t>(num_options);
+        colors.resize(color_ids.size() + 1);  // colors are 1-indexed.
+        for (const auto& kv : color_ids) { colors[kv.second] = kv.first; }
     }
 
     void hide(size_t p) {
@@ -455,7 +458,10 @@ struct MCC {
             while (TOP(r) >= 0) ++r;
             oss << "  " << -TOP(r) << ": ";
             for(size_t p = ULINK(r); TOP(p) > 0; ++p) {
-                oss << NAME(TOP(p)) << " ";
+                size_t q = TOP(p);
+                oss << NAME(q);
+                if (COLOR(q) > 0) oss << ":" << colors[COLOR(q)];
+                oss << " ";
             }
             oss << std::endl;
         }
