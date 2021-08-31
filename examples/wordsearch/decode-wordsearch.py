@@ -16,9 +16,10 @@ def decode(rows, cols):
         m = re.match('  \\d+: (\\w+)', line)
         if m is None: continue
         word = m.groups()[0]
-        cs = [(int(x),int(y)) for x,y in re.findall('\((\\d+),(\\d+)\)', line)]
-        for coord, letter in zip(cs,word):
-            b[coord[0]][coord[1]] = letter
+        cs = [(int(x),int(y),z) for x,y,z in \
+              re.findall('\((\\d+),(\\d+)\):(\\w+)', line)]
+        for coord in cs:
+            b[coord[0]][coord[1]] = coord[2]
     if b is not None: yield print_board(b)
 
 if __name__ == '__main__':
