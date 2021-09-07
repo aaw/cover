@@ -230,7 +230,7 @@ struct XC {
         }
     }
 
-    size_t choose() {
+    size_t choose_item() {
         int theta = std::numeric_limits<int>::max();
         size_t i = RLINK(0);
         for(size_t p = RLINK(0); p != 0; p = RLINK(p)) {
@@ -287,7 +287,7 @@ struct XC {
 
         while (true) {
             // X3. [Choose i.]
-            size_t i = choose();
+            size_t i = choose_item();
 
             // X4. [Cover i.]
             cover(i);

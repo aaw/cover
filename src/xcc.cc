@@ -289,7 +289,7 @@ struct XCC {
         }
     }
 
-    size_t choose() {
+    size_t choose_item() {
         int theta = std::numeric_limits<int>::max();
         size_t i = RLINK(0);
         for(size_t p = RLINK(0); p != 0; p = RLINK(p)) {
@@ -349,7 +349,7 @@ struct XCC {
 
         while (true) {
             // C3. [Choose i.]
-            size_t i = choose();
+            size_t i = choose_item();
 
             // C4. [Cover i.]
             cover(i);

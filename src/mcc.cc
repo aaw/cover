@@ -423,7 +423,7 @@ struct MCC {
         return true;
     }
 
-    size_t choose(size_t l) {
+    size_t choose_item(size_t l) {
         int theta = std::numeric_limits<int>::max();
         size_t i = RLINK(0);
         INC(choices);
@@ -493,7 +493,7 @@ struct MCC {
 
         while (true) {
             // M3. [Choose i.]
-            size_t i = choose(l);
+            size_t i = choose_item(l);
             if (score[l] == 0) {
                 INC(score_zero);
                 if (!backtrack(l, i)) return;
