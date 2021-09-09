@@ -165,34 +165,29 @@ struct XC {
     }
 
     void hide(size_t p) {
-        for(size_t q = p + 1; q != p;) {
+        for(size_t q = p + 1; q != p; ++q) {
             int x = TOP(q);
             size_t u = ULINK(q), d = DLINK(q);
-            if (x <= 0) { q = u; continue; } // q was a spacer.
+            if (x <= 0) { q = u - 1; continue; } // q was a spacer.
             DLINK(u) = d;
             ULINK(d) = u;
             LEN(x)--;
-            ++q;
         }
     }
 
     void unhide(size_t p) {
-        for(size_t q = p - 1; q != p;) {
+        for(size_t q = p - 1; q != p; --q) {
             int x = TOP(q);
             size_t u = ULINK(q), d = DLINK(q);
-            if (x <= 0) { q = d; continue; } // q was a spacer.
+            if (x <= 0) { q = d + 1; continue; } // q was a spacer.
             DLINK(u) = q;
             ULINK(d) = q;
             LEN(x)++;
-            --q;
         }
     }
 
     void cover(size_t i) {
-        for (size_t p = DLINK(i); p != i;) {
-            hide(p);
-            p = DLINK(p);
-        }
+        for (size_t p = DLINK(i); p != i; p = DLINK(p)) { hide(p); }
         size_t l = LLINK(i), r = RLINK(i);
         RLINK(l) = r;
         LLINK(r) = l;
@@ -202,10 +197,7 @@ struct XC {
         size_t l = LLINK(i), r = RLINK(i);
         RLINK(l) = i;
         LLINK(r) = i;
-        for (size_t p = ULINK(i); p != i;) {
-            unhide(p);
-            p = ULINK(p);
-        }
+        for (size_t p = ULINK(i); p != i; p = ULINK(p)) { unhide(p); }
     }
 
     void try_once(size_t l) {
