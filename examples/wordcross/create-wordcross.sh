@@ -11,5 +11,5 @@ BASEDIR="$(dirname $EXAMPLEDIR)"
 cd "$BASEDIR"
 make 1>/dev/null
 ./bin/xcc -pprefer_sharp=1 \
-    <(./examples/wordcross/encode-wordcross.py --break_symmetry "$1" "$2" "$3") \
+    <(./examples/wordcross/encode-wordcross.py "$1" "$2" "$3") \
     | ./examples/wordcross/decode-wordcross.py --only_connected --deduplicate "$2" "$3"

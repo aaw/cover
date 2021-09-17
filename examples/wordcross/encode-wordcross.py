@@ -43,16 +43,20 @@ def wordcross(words, args):
             p.append("{}:0".format(pcoords[(r+len(word),c)]))
         return p
 
+    conn = []
+    if args.connect:
+        total = sum(len(w)-1 for w in words) + 1
+        conn.append('C[{}:{}]'.format(rows*cols-total,rows*cols))
     primary = list(ids.values()) + list(hs.values()) + list(vs.values())
     secondary = list(coords.values()) + list(pcoords.values())
-    print(" ".join(primary + ['|'] + secondary))
+    print(" ".join(primary + conn + ['|'] + secondary))
 
     for i, word in enumerate(words):
         for r in range(rows):
             for c in range(cols-len(word)+1):
                 print(" ".join(horizontal_placement(word, r, c)))
         # Symmetry-breaking: omit vertical placement of first word only.
-        if args.break_symmetry and rows == cols and i == 0: continue
+        if rows == cols and i == 0: continue
         for r in range(rows-len(word)+1):
             for c in range(cols):
                 print(" ".join(vertical_placement(word, r, c)))
@@ -77,15 +81,20 @@ def wordcross(words, args):
                 vs[(r,c)], pcoords[(r,c)], pcoords[(r+1,c)], coords[(r,c)],
                 coords[(r+1,c)]))
 
+    if args.connect:
+        for r in range(rows):
+            for c in range(cols):
+                print("C {}:0 {}:.".format(pcoords[(r,c)], coords[(r,c)]))
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description="Encode a wordcross problem as XCC")
     parser.add_argument('wordfile', type=str, help='input words, one per line')
     parser.add_argument('rows', type=int, help='number of rows')
     parser.add_argument('cols', type=int, help='number of columns')
-    parser.add_argument('--break_symmetry',
+    parser.add_argument('--connect',
                         action='store_true',
-                        help='break symmetry when rows=cols')
+                        help='encourage connectedness with many empty squares')
     args = parser.parse_args()
     words = [w.strip() for w in open(args.wordfile) if len(w.strip()) > 0]
     wordcross(words, args)
