@@ -12,16 +12,16 @@ must be the entire set of items.
 
 For example, if the items are _{a,b,c,d}_ and the list of options are:
 
-    * _{a,b}_
-    * _{c,d}_
-    * _{a,c}_
-    * _{b,d}_
-    * _{a,d}_
+   * _{a,b}_
+   * _{c,d}_
+   * _{a,c}_
+   * _{b,d}_
+   * _{a,d}_
 
 then either
 
-    * _{a,b}_ and _{c,d}_ or
-    * _{a,c}_ and _{b,d}_
+   * _{a,b}_ and _{c,d}_ or
+   * _{a,c}_ and _{b,d}_
 
 are the only two solutions to the exact set cover problem.
 
