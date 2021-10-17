@@ -3,7 +3,7 @@ Partridge Puzzle
 
 Robert T. Wainright's [Partridge Puzzle](https://www.mathpuzzle.com/partridge.html) of order n is: pack 1 1-by-1 square,
 2 2-by-2 squares, ..., n n-by-n squares into a larger square of size N-by-N, where N is the sum of the first
-n cubes.
+n integers.
 
 The sum of the areas of the smaller squares is always equal to the area of the larger square (N-by-N) because
 of a basic identity about cubes: the sum of the first n cubes is always equal to the square of the sum of the
