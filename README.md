@@ -84,12 +84,12 @@ Building
 --------
 
 You'll need `git` to clone this repo, `g++` and `make` to build and `bash` and `python3` to run
-instance generators and examples.
+instance generators and examples. Some examples needs `wget` to download external input files.
 
 On a debian-based Linux distribution, you can make sure you have everything you need by
 running:
 
-    apt-get update && apt-get install bash build-essential git python3
+    apt-get update && apt-get install bash build-essential git python3 wget
 
 Next, clone this repo:
 
