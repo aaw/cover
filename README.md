@@ -1,5 +1,4 @@
-cover
-=====
+# cover
 
 Solvers for the [exact set cover](https://en.wikipedia.org/wiki/Exact_cover) problem and variants. All
 solvers are translations of Don Knuth's [Dancing Links](https://en.wikipedia.org/wiki/Dancing_Links)
@@ -27,8 +26,7 @@ are the only two solutions to the exact set cover problem.
 
 The solvers in this repo enumerate all solutions to a given set cover problem.
 
-Example usage
--------------
+## Example usage
 
 Input files for all solvers must be newline-delimited and consist of a line of items
 followed by one or more lines of options. Each line of items or options is space-delimited.
@@ -61,8 +59,7 @@ $ ./bin/xc input.xc
 counter: [solutions] = 2
 ```
 
-More examples
--------------
+## More examples
 
 A few Python scripts in this repo generate input files for interesting applications of exact set cover:
 
@@ -80,8 +77,7 @@ scripts that wrap the call to the exact set cover solver:
 
 All of these examples appear in one form or another in The Art of Computer Programming Volume 4, Fascicle 5.
 
-Building
---------
+## Building
 
 You'll need `git` to clone this repo, `g++` and `make` to build and `bash` and `python3` to run
 instance generators and examples. Some examples needs `wget` to download external input files.
@@ -95,7 +91,74 @@ Next, clone this repo:
 
     git clone git@github.com:aaw/cover.git
 
-And type `make`.
+And type `make`. This produces three binaries:
 
-Advanced features
------------------
+   * `xc`: An exact set cover solver
+   * `xcc`: A solver supporting color constraints
+   * `mcc`: A solver supporting multiplicities
+
+## Input format
+
+The three solvers in this repo each support slightly different input formats, but
+all support the basic newline-delimited items-followed-by-options format described
+above.
+
+In all three solvers, anything after two forward slashes (`//`) is considered a
+comment and ignored. A backslash preceded by a space (` \`) can be used for line
+continuation to split a long line into multiple lines in the input. See [test/simple_4.xc](test/simple_4.xc)
+for an extended example of comments and line continuations.
+
+### Item syntax
+
+Items can be any string with the following restrictions:
+
+   * Can't contain spaces (these are used to delimit items and options)
+   * Can't contain pipes (`|`)
+   * Can't contain colons (`:`)
+   * Can't contain brackets (`[`, `]`)
+
+Pipes, colons, and brackets are all used for special input features, as described below:
+
+### Optional items
+
+The first line of items in the input can contain a single pipe (`|`) that separates
+required items from optional items. Required items must be present in any solution
+found by a solver but optional items do not need to be present in a solution.
+
+#### Example:
+
+When `xc` runs on:
+
+```
+a b | c
+a
+b
+a b c
+```
+
+it produces the output:
+
+```
+[src/xc.cc:256] Solution:
+  1: a
+  2: b
+
+[src/xc.cc:256] Solution:
+  3: a b c
+
+counter: [solutions] = 2
+```
+
+_Supported by: xc, xcc, mcc_
+
+### Colors
+
+_Supported by: xcc, mcc_
+
+### Multiplicities
+
+_Supported by: mcc_
+
+### Sharp prefixes
+
+_Supported by: xc, xcc, mcc_
