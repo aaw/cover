@@ -229,4 +229,11 @@ _Supported by: mcc_
 
 ### Sharp prefixes
 
+Items prefixed with a `#` can be treated specially by solvers, either by focusing
+the search towards or away from these items. This can dramatically speed up the
+solvers in some situations.
+
+To enable this behavior, pass `-pprefer_sharp` or `-pprefer_unsharp` on the
+command line to any of the solvers.
+
 _Supported by: xc, xcc, mcc_
