@@ -108,7 +108,7 @@ comment and ignored. A backslash preceded by a space (` \`) can be used for line
 continuation to split a long line into multiple lines in the input. See [test/simple_4.xc](test/simple_4.xc)
 for an extended example of comments and line continuations.
 
-### Item syntax
+### Items
 
 Items can be any string with the following restrictions:
 
@@ -119,11 +119,11 @@ Items can be any string with the following restrictions:
 
 Pipes, colons, and brackets are all used for special input features, as described below:
 
-### Optional items
+### Primary and secondary items
 
-The first line of items in the input can contain a single pipe (`|`) that separates
-required items from optional items. Required items must be present in any solution
-found by a solver but optional items do not need to be present in a solution.
+The item declarations on the first line of the input can contain a single pipe (`|`) that
+separates primary items from secondary items. Primary items must be present in any solution
+found by a solver but secondary items do not need to be present in a solution.
 
 #### Example:
 
@@ -145,17 +145,85 @@ it produces the output:
 
 [src/xc.cc:256] Solution:
   3: a b c
-
-counter: [solutions] = 2
 ```
 
 _Supported by: xc, xcc, mcc_
 
 ### Colors
 
+Options may specify a "color" for any secondary items. Colored secondary
+items may be selected an unlimited number of times as long as the colors are
+consistent.
+
+Colors are specified by suffixing the item with a colon and the color.
+
+#### Example:
+
+When `xcc` runs on:
+
+```
+a b | c d
+a c:RED d
+b c:RED
+b c:BLUE
+a b c:BLUE
+```
+
+it produces the output:
+
+```
+[src/xcc.cc:318] Solution:
+  1: a c:RED d
+  2: b c:RED
+
+[src/xcc.cc:318] Solution:
+  4: a b c:BLUE
+```
+
 _Supported by: xcc, mcc_
 
 ### Multiplicities
+
+Primary items can be annotated with upper and lower bounds on the number of times
+they're used.
+
+Multiplicities are defined by a pair of colon-delimited numbers within brackets after the
+item declaration.
+
+#### Example:
+
+When `mcc` runs on:
+
+```
+A[0:1] B[1:2] C[2:3] D
+A B
+B C
+A C
+A B D
+A C D
+B C D
+```
+
+it produces the output:
+
+```
+[src/mcc.cc:456] Solution:
+  5: A C D
+  2: B C
+
+[src/mcc.cc:456] Solution:
+  6: B C D
+  2: B C
+  3: A C
+
+[src/mcc.cc:456] Solution:
+  6: B C D
+  2: B C
+
+[src/mcc.cc:456] Solution:
+  6: B C D
+  3: A C
+```
 
 _Supported by: mcc_
 
