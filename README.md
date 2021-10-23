@@ -95,7 +95,7 @@ And type `make`. This produces three binaries:
 
    * `xc`: An exact set cover solver
    * `xcc`: A solver supporting color constraints
-   * `mcc`: A solver supporting multiplicities
+   * `mcc`: A solver supporting multiplicities and color constraints
 
 ## Input format
 
