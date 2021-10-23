@@ -233,7 +233,7 @@ Items prefixed with a `#` can be treated specially by solvers, either by focusin
 the search towards or away from these items. This can dramatically speed up the
 solvers in some situations.
 
-To enable this behavior, pass `-pprefer_sharp` or `-pprefer_unsharp` on the
+To enable this behavior, pass `-pprefer_sharp=1` or `-pprefer_unsharp=1` on the
 command line to any of the solvers.
 
 _Supported by: xc, xcc, mcc_
