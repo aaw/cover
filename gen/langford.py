@@ -14,10 +14,11 @@ def langford(n):
     nums = [str(x) for x in range(1,n+1)]
     labels = ["s{}".format(x) for x in range(1,2*n+1)]
     print(" ".join(nums + labels))
-    for n in nums:
-        nn = int(n)
+    for k in nums:
+        nn = int(k)
         for i in range(len(labels)-nn-1):
-            print("{} {} {}".format(nn, labels[i], labels[i+nn+1]))
+            if nn != n-(1-n&1) or i <= n/2-1:
+                print("{} {} {}".format(nn, labels[i], labels[i+nn+1]))
 
 if __name__ == '__main__':
     try:
