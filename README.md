@@ -74,6 +74,7 @@ scripts that wrap the call to the exact set cover solver:
    * [examples/wordsearch](examples/wordsearch): A [word search](https://en.wikipedia.org/wiki/Word_search) generator.
    * [examples/wordcross](examples/wordcross): A word cross generator: generates [diagrams like this](https://digitalcommons.butler.edu/cgi/viewcontent.cgi?referer=&httpsredir=1&article=3847&context=wordways).
    * [examples/partridge](examples/partridge): A solver for Robert T. Wainwright's [Partridge Puzzle](https://www.mathpuzzle.com/partridge.html).
+   * [examples/dodecahedron](examples/dodecahedron): An enumerator for 2-D net colorings of [A Colorful Dodecahedron](https://puzzling.stackexchange.com/questions/122258/a-colorful-dodecahedron).
 
 All of these examples appear in one form or another in The Art of Computer Programming Volume 4, Fascicle 5.
 
