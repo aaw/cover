@@ -81,7 +81,7 @@ All of these examples appear in one form or another in The Art of Computer Progr
 ## Building
 
 You'll need `git` to clone this repo, `g++` and `make` to build and `bash` and `python3` to run
-instance generators and examples. Some examples needs `wget` to download external input files.
+instance generators and examples. Some examples need `wget` to download external input files.
 
 On a debian-based Linux distribution, you can make sure you have everything you need by
 running:

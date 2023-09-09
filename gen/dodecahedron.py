@@ -18,7 +18,7 @@
 # edges clockwise, we see edge colors yby, y, y, yb, and by. This corresponds to the
 # encoding of pentagon 'a' below as ['yby', 'y', 'y', 'yb', 'by'].
 #
-# The only real wrinkle is that the color chose for a particular edge in one face must
+# The only real wrinkle is that the color chosen for a particular edge in one face must
 # match the _reverse_ coloring in the other face the edge intersects. Colorings y, b, yby,
 # and byb don't cause any issues because they're palindromes. But colorings yb and by must
 # be handled carefully. In our enumeration of the edges along each face of the Dodecahedron
