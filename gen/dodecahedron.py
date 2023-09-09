@@ -6,7 +6,7 @@
 # to the xcc binary in this repo. For example, from the top directory of this repo:
 #
 #  $ make
-#  $ python3 examples/dodecahedron/dodecahedron.py > /tmp/dodecahedron.xcc
+#  $ ./gen/dodecahedron.py > /tmp/dodecahedron.xcc
 #  $ ./bin/xcc /tmp/dodcecahedron.xcc
 #
 # Colored pentagons are labeled a-l as in https://puzzling.stackexchange.com/a/122271/84078.
