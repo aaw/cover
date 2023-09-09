@@ -66,6 +66,7 @@ A few Python scripts in this repo generate input files for interesting applicati
    * [gen/langford.py](gen/langford.py): Generates [Langford pairings](https://en.wikipedia.org/wiki/Langford_pairing).
    * [gen/nqueens.py](gen/nqueens.py): Generates solutions to the [N-queens problem](https://en.wikipedia.org/wiki/Eight_queens_puzzle)
    * [gen/pentomino.py](gen/pentomino.py): Generates rectangular tilings of [Pentominoes](https://en.wikipedia.org/wiki/Pentomino) using Conway's O-Z labeling. Each pentomino is used exactly once.
+   * [gen/dodecahedron.py](gen/dodecahedron): Generates 2-D net colorings of [A Colorful Dodecahedron](https://puzzling.stackexchange.com/questions/122258/a-colorful-dodecahedron).
 
 Some examples benefit from filtering or transforming the output in simple ways. For these, there are
 scripts that wrap the call to the exact set cover solver:
@@ -74,7 +75,6 @@ scripts that wrap the call to the exact set cover solver:
    * [examples/wordsearch](examples/wordsearch): A [word search](https://en.wikipedia.org/wiki/Word_search) generator.
    * [examples/wordcross](examples/wordcross): A word cross generator: generates [diagrams like this](https://digitalcommons.butler.edu/cgi/viewcontent.cgi?referer=&httpsredir=1&article=3847&context=wordways).
    * [examples/partridge](examples/partridge): A solver for Robert T. Wainwright's [Partridge Puzzle](https://www.mathpuzzle.com/partridge.html).
-   * [examples/dodecahedron](examples/dodecahedron): An enumerator for 2-D net colorings of [A Colorful Dodecahedron](https://puzzling.stackexchange.com/questions/122258/a-colorful-dodecahedron).
 
 All of these examples appear in one form or another in The Art of Computer Programming Volume 4, Fascicle 5.
 
