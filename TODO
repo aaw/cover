@@ -1,1 +1,2 @@
-
+* xcc's output on test/simple_5.xcc is wrong: outputs "y:A" as part of option 2.
+* dc chokes on test/simple_4.xc

@@ -2,7 +2,8 @@
 
 Solvers for the [exact set cover](https://en.wikipedia.org/wiki/Exact_cover) problem and variants. All
 solvers are translations of Don Knuth's [Dancing Links](https://en.wikipedia.org/wiki/Dancing_Links)
-programs described in The Art of Computer Programming, Volume 4, Fascicle 5.
+programs described in The Art of Computer Programming, Volume 4B and the Dancing Cells program
+described in The Art of Computer Programming, Fascicle 7A.
 
 Exact set cover problems consist of a set of _items_ and a list of _options_. Each option is a
 subset of the items. The goal is to find a set of options that form a partition of the items:
@@ -76,7 +77,7 @@ scripts that wrap the call to the exact set cover solver:
    * [examples/wordcross](examples/wordcross): A word cross generator: generates [diagrams like this](https://digitalcommons.butler.edu/cgi/viewcontent.cgi?referer=&httpsredir=1&article=3847&context=wordways).
    * [examples/partridge](examples/partridge): A solver for Robert T. Wainwright's [Partridge Puzzle](https://www.mathpuzzle.com/partridge.html).
 
-All of these examples appear in one form or another in The Art of Computer Programming Volume 4, Fascicle 5.
+Most of these examples appear in one form or another in The Art of Computer Programming Volume 4, Fascicle 5.
 
 ## Building
 
@@ -92,15 +93,16 @@ Next, clone this repo:
 
     git clone git@github.com:aaw/cover.git
 
-And type `make`. This produces three binaries:
+And type `make`. This produces four binaries:
 
    * `xc`: An exact set cover solver
    * `xcc`: A solver supporting color constraints
    * `mcc`: A solver supporting multiplicities and color constraints
+   * `dc`: A solver supporting color constraints. Functionally equivalent to `xcc` but implemented using "dancing cells" instead of dancing links.
 
 ## Input format
 
-The three solvers in this repo each support slightly different input formats, but
+The four solvers in this repo each support slightly different input formats, but
 all support the basic newline-delimited items-followed-by-options format described
 above.
 
@@ -148,7 +150,7 @@ it produces the output:
   3: a b c
 ```
 
-_Supported by: xc, xcc, mcc_
+_Supported by: xc, xcc, mcc, dc_
 
 ### Colors
 
@@ -181,7 +183,7 @@ it produces the output:
   4: a b c:BLUE
 ```
 
-_Supported by: xcc, mcc_
+_Supported by: xcc, mcc, dc_
 
 ### Multiplicities
 
@@ -237,4 +239,4 @@ solvers in some situations.
 To enable this behavior, pass `-pprefer_sharp=1` or `-pprefer_unsharp=1` on the
 command line to any of the solvers.
 
-_Supported by: xc, xcc, mcc_
+_Supported by: xc, xcc, mcc, dc_
