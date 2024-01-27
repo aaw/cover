@@ -1,0 +1,8 @@
+a b c | d e f
+a b d
+c d
+c e
+a b d:BLUE
+c d:BLUE
+a b d:RED
+c d:RED
