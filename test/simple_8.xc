@@ -1,3 +1,4 @@
+// solutions: 1
 a c d e f
 a d
 a d f

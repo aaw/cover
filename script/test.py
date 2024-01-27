@@ -12,10 +12,11 @@ def sig(arr):
                       for element in sorted_arr))
 
 class Problem:
-    def __init__(self, primary, secondary, items):
+    def __init__(self, primary, secondary, items, nsols):
         self.primary = primary
         self.secondary = secondary
         self.items = items
+        self.nsols = nsols
 
     def verify(self, items):
         primaries = set()
@@ -55,10 +56,15 @@ class Problem:
 def parse_input_file(input_filename):
     accum = ''
     cleaned = []
+    nsols = -1
     with open(input_filename) as f:
         for line in f.readlines():
             clean = line.split('//')[0].strip()
-            if len(clean) == 0: continue
+            if len(clean) == 0:
+                m = re.match('// solutions: (\\d+)', line.strip())
+                if m:
+                    nsols = int(m.groups()[0])
+                continue
             accum += clean
             if accum.endswith('\\'):
                 accum = accum[:-1]
@@ -73,7 +79,7 @@ def parse_input_file(input_filename):
     secondary = []
     if len(ps) > 1:
         secondary = [o.strip() for o in ps[1].strip().split()]
-    return Problem(set(primary), set(secondary), dict((sig(i), i) for i in items))
+    return Problem(set(primary), set(secondary), dict((sig(i), i) for i in items), nsols)
 
 def run_subprocess(executable, test_file):
     try:
@@ -86,6 +92,7 @@ def run_subprocess(executable, test_file):
 
 def run_test(executable, test_file, problem):
     parsing = False
+    verified_solutions = 0
     for line in run_subprocess(executable, test_file):
         if line.strip().endswith('Solution:'):
             parsing = True
@@ -94,6 +101,7 @@ def run_test(executable, test_file, problem):
             parsing = False
             try:
                 problem.verify(items)
+                verified_solutions += 1
             except Exception as e:
                 print('Invalid solution:')
                 for item in items:
@@ -102,6 +110,8 @@ def run_test(executable, test_file, problem):
         elif parsing:
             raw_sol = ':'.join(line.split(':')[1:])
             items.append([sol.strip() for sol in raw_sol.strip().split(' ')])
+    if verified_solutions != problem.nsols:
+        print('Expected {} solutions, got {}.'.format(problem.nsols, verified_solutions))
 
 def find_root_dir():
     cwd = os.getcwd()

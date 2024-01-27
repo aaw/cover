@@ -4,6 +4,7 @@
 // Items ak represent a queen on the upward diagonal with r+c=k
 // Items bk represent a queen on the downward diagonal with r-c+n=k
 // Every row and column must be covered, but diagonals are optional
+// solutions: 10
 
 r1 r2 r3 r4 r5 c1 c2 c3 c4 c5 | a9 b5 a5 a7 b3 a3 a2 a10 b1 a4 a8 b7 b9 a6 b8 b2 b6 b4
 r1 c1 a2 b5

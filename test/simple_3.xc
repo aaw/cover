@@ -1,3 +1,4 @@
+// solutions: 6
 a b c | d e f
 a b d
 c d
