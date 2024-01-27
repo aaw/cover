@@ -342,8 +342,9 @@ struct DC {
                     LOG(3) << "Leaving level " << l;
                     if (l == 0) return;
                     --l;
-                    i = ITM(xs[l]);
-                    j = LOC(xs[l]);
+                    i = ITM(xs.back());
+                    j = LOC(xs.back());
+                    xs.pop_back();
 
                     // C11. [Try again?]
                     if (j+1 >= i + SIZE(i)) continue; // -> C10
@@ -392,13 +393,15 @@ struct DC {
                 ys.resize(l+2); ys[l+1] = t;
             }
 
+            LOG(0) << "coming from above";
             while (true) {
                 // C6. [Try SET[j].]
-                LOG(3) << "xs size: " << xs.size() << ", want to set xs[" << l;
-                xs.resize(l+1); xs[l] = set_[j];
+                LOG(0) << "xs size: " << xs.size() << ", want to set xs[" << l << "]: " << (l - (int)xs.size()+1);
+                //xs.resize(l+1); xs[l] = set_[j];
+                xs.push_back(set_[j]);
                 k = oactive_ = active_;
                 // for all siblings sib of x[l]:
-                for(size_t sib = xs[l] + 1; sib != xs[l]; ++sib) {
+                for(size_t sib = xs.back() + 1; sib != xs.back(); ++sib) {
                     int ip = ITM(sib);
                     if (ip < 0) { sib += (ip - 1); continue; } // sibling wrap-around: -1 b/c for loop incs after continue
                     size_t kp = POS(ip);
@@ -416,7 +419,7 @@ struct DC {
 
                 // C7. [Hide SET[j].]
                 flag_ = 0;
-                for(size_t sib = xs[l] + 1; sib != xs[l]; ++sib) {
+                for(size_t sib = xs.back() + 1; sib != xs.back(); ++sib) {
                     int ip = ITM(sib);
                     if (ip < 0) { sib += (ip - 1); continue; } // sibling wrap-around: -1 b/c for loop incs after continue
                     if (ip < (int)second_ || POS(ip) < oactive_) {
@@ -430,8 +433,9 @@ struct DC {
                         // C10. [Leave level l.]
                         if (l == 0) return;
                         --l;
-                        i = ITM(xs[l]);
-                        j = LOC(xs[l]);
+                        xs.pop_back();
+                        i = ITM(xs.back());
+                        j = LOC(xs.back());
                     }
                     LOG(3) << "ys size: " << ys.size();
                     LOG(3) << "looking at ys from [" << ys[l] << "," << ys[l+1] << ")";
@@ -443,7 +447,8 @@ struct DC {
                     t = ys[l+1];
                     active_ = t - ys[l];
                     ++j;
-                    LOG(3) << "jumping to C6";
+                    LOG(0) << "jumping to C6";
+                    xs.pop_back();
                     continue; // -> C6
                 }
                 break;
