@@ -114,13 +114,13 @@ struct DC {
         std::unordered_map<std::string, size_t> color_ids;
         size_t next_color = 1;
 
+        int n = 0;
         while(fgets(s, MAX_LINE_SIZE, f) != NULL) {
             CHECK(strlen(s) < MAX_LINE_SIZE-1 || s[strlen(s)-1] == '\n') <<
                 "Input line too long. Recompile with larger MAX_LINE_SIZE.";
             int offset = 0, r = 0;
             size_t cnum = 0;
             std::string curr;
-            int n = 0;
             while (sscanf(s + offset, " %s %n", ss, &r) > 0) {
                 cnum = color_parse(ss, color_ids, next_color, &curr);
                 next_color = std::max(next_color, cnum + 1);
@@ -148,6 +148,7 @@ struct DC {
             node_.push_back(spacer);
             seen.clear();
             ++num_options;
+            n = 0;
         }
         color_.resize(next_color);
         for (const auto& kv: color_ids) { color_[kv.second] = kv.first; }
