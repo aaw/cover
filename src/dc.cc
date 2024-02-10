@@ -277,13 +277,13 @@ struct DC {
         }
     }
 
-    std::string print_solution(const std::vector<size_t>& xs, int l) {
+    std::string print_solution(const std::vector<size_t>& xs) {
         std::ostringstream oss;
         // For each option in the solution:
-        for (int i = 0; i < l; ++i) {
-            oss << "  " << xs[i] << ": ";
+        for (size_t x : xs) {
+            oss << "  " << x << ": ";
             // Rewind to the start of the option.
-            size_t ni = xs[i];
+            size_t ni = x;
             while (ITM(ni) > 0) { ++ni; }
             ni += ITM(ni);
             // Print the items in the option.
@@ -333,7 +333,7 @@ struct DC {
 
             if (theta == std::numeric_limits<size_t>::max()) {
                 // C9. [Visit a solution.]
-                LOG(1) << "Solution:\n" << print_solution(xs, l);
+                LOG(1) << "Solution:\n" << print_solution(xs);
                 INC(solutions);
 
                 // TODO: this should be a do {} while () around C10.
@@ -342,9 +342,9 @@ struct DC {
                     LOG(3) << "Leaving level " << l;
                     if (l == 0) return;
                     --l;
-                    xs.pop_back();
                     i = ITM(xs.back());
                     j = LOC(xs.back());
+                    xs.pop_back();
 
                     // C11. [Try again?]
                     if (j+1 >= i + SIZE(i)) continue; // -> C10
@@ -442,6 +442,7 @@ struct DC {
                     t = ys[l+1];
                     active_ = t - ys[l];
                     ++j;
+                    xs.pop_back();
                     continue; // -> C6
                 }
                 break;
