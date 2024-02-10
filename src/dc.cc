@@ -277,13 +277,13 @@ struct DC {
         }
     }
 
-    std::string print_solution(const std::vector<size_t>& xs) {
+    std::string print_solution(const std::vector<size_t>& xs, int l) {
         std::ostringstream oss;
         // For each option in the solution:
-        for (size_t x : xs) {
-            oss << "  " << x << ": ";
+        for (int i = 0; i < l; ++i) {
+            oss << "  " << xs[i] << ": ";
             // Rewind to the start of the option.
-            size_t ni = x;
+            size_t ni = xs[i];
             while (ITM(ni) > 0) { ++ni; }
             ni += ITM(ni);
             // Print the items in the option.
@@ -333,7 +333,7 @@ struct DC {
 
             if (theta == std::numeric_limits<size_t>::max()) {
                 // C9. [Visit a solution.]
-                LOG(1) << "Solution:\n" << print_solution(xs);
+                LOG(1) << "Solution:\n" << print_solution(xs, l);
                 INC(solutions);
 
                 // TODO: this should be a do {} while () around C10.
@@ -342,9 +342,9 @@ struct DC {
                     LOG(3) << "Leaving level " << l;
                     if (l == 0) return;
                     --l;
+                    xs.pop_back();
                     i = ITM(xs.back());
                     j = LOC(xs.back());
-                    xs.pop_back();
 
                     // C11. [Try again?]
                     if (j+1 >= i + SIZE(i)) continue; // -> C10
@@ -389,15 +389,12 @@ struct DC {
                     trail[t+kk] = {.i = item_[kk], .size = SIZE(item_[kk])};
                 }
                 t += active_;
-                LOG(3) << "ys size: " << ys.size() << ", want to set ys[" << l+1;
+
                 ys.resize(l+2); ys[l+1] = t;
             }
 
-            LOG(0) << "coming from above";
             while (true) {
                 // C6. [Try SET[j].]
-                LOG(0) << "xs size: " << xs.size() << ", want to set xs[" << l << "]: " << (l - (int)xs.size()+1);
-                //xs.resize(l+1); xs[l] = set_[j];
                 xs.push_back(set_[j]);
                 k = oactive_ = active_;
                 // for all siblings sib of x[l]:
@@ -437,8 +434,6 @@ struct DC {
                         i = ITM(xs.back());
                         j = LOC(xs.back());
                     }
-                    LOG(3) << "ys size: " << ys.size();
-                    LOG(3) << "looking at ys from [" << ys[l] << "," << ys[l+1] << ")";
                     for (size_t k = ys[l]; k < ys[l+1]; ++k) {
                         TrailNode tn = trail[k];
                         LOG(3) << "popped trail node " << k << ": (" << tn.i << ", " << tn.size << ")";
@@ -447,8 +442,6 @@ struct DC {
                     t = ys[l+1];
                     active_ = t - ys[l];
                     ++j;
-                    LOG(0) << "jumping to C6";
-                    xs.pop_back();
                     continue; // -> C6
                 }
                 break;
