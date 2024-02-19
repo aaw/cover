@@ -36,6 +36,7 @@ struct TrailNode {
 #define ITM(i) (node_[i].item)
 #define LOC(i) (node_[i].loc)
 #define CLR(i) (node_[i].color)
+#define BACKBACK(v) (v[v.size()-2])
 #define MAX_LINE_SIZE (100000)
 
 struct DC {
@@ -297,15 +298,33 @@ struct DC {
         return oss.str();
     }
 
+    std::string parray2(const std::vector<size_t>& ys) {
+        std::ostringstream oss;
+        for (size_t y : ys) {
+            oss << "[" << y << "]";
+        }
+        return oss.str();
+    }
+
+    std::string parray(const std::vector<size_t>& ys, size_t l) {
+        std::ostringstream oss;
+        size_t i = 0;
+        while (true) {
+            if (ys[i] == std::numeric_limits<size_t>::max()) break;
+            oss << "[";
+            if (i == l) oss << "*";
+            oss << ys[i] << "]";
+            ++i;
+        }
+        return oss.str();
+    }
+
     void solve() {
         // C1. [Initialize.]
         INITCOUNTER(solutions);
         std::vector<size_t> xs, ys;
-        std::vector<TrailNode> trail;
         ys.push_back(0);
-        // TODO: remove l entirely, just use xs.size()
-        // TODO: don't init xs,ys,trail
-        size_t l = 0;
+        std::vector<TrailNode> trail;
         size_t t = 0;
         size_t j = 0; // TODO: never mentioned that we need to init like this?
         size_t k = 0; // TODO: also never mentioned?
@@ -339,21 +358,22 @@ struct DC {
                 // TODO: this should be a do {} while () around C10.
                 while (true) {
                     // C10. [Leave level l.]
-                    LOG(3) << "Leaving level " << l;
-                    if (l == 0) return;
-                    --l;
+                    if (xs.empty()) return;
                     i = ITM(xs.back());
                     j = LOC(xs.back());
                     xs.pop_back();
 
                     // C11. [Try again?]
-                    if (j+1 >= i + SIZE(i)) continue; // -> C10
-                    for (size_t k = ys[l]; k < ys[l+1]; ++k) {
+                    if (j+1 >= i + SIZE(i)) {
+                        ys.pop_back();
+                        continue; // -> C10
+                    }
+                    for (size_t k = BACKBACK(ys); k < ys.back(); ++k) {
                         TrailNode tn = trail[k];
                         SIZE(tn.i) = tn.size;
                     }
-                    t = ys[l+1];
-                    active_ = t - ys[l];
+                    t = ys.back();
+                    active_ = t - BACKBACK(ys);
                     ++j;
                     break; // -> C6
                 }
@@ -389,8 +409,7 @@ struct DC {
                     trail[t+kk] = {.i = item_[kk], .size = SIZE(item_[kk])};
                 }
                 t += active_;
-
-                ys.resize(l+2); ys[l+1] = t;
+                ys.push_back(t);
             }
 
             while (true) {
@@ -428,19 +447,19 @@ struct DC {
                     // C11. [Try again?]
                     while (j + 1 >= i + SIZE(i)) {
                         // C10. [Leave level l.]
-                        if (l == 0) return;
-                        --l;
+                        if (xs.size() <= 1) return;
                         xs.pop_back();
+                        ys.pop_back();
                         i = ITM(xs.back());
                         j = LOC(xs.back());
                     }
-                    for (size_t k = ys[l]; k < ys[l+1]; ++k) {
+                    for (size_t k = BACKBACK(ys); k < ys.back(); ++k) {
                         TrailNode tn = trail[k];
                         LOG(3) << "popped trail node " << k << ": (" << tn.i << ", " << tn.size << ")";
                         SIZE(tn.i) = tn.size;
                     }
-                    t = ys[l+1];
-                    active_ = t - ys[l];
+                    t = ys.back();
+                    active_ = t - BACKBACK(ys);
                     ++j;
                     xs.pop_back();
                     continue; // -> C6
@@ -449,8 +468,6 @@ struct DC {
             }
 
             // C8. [Advance to the next level.]
-            LOG(3) << "Level " << l << " -> " << l+1;
-            ++l; // -> C2
         }
     }
 
