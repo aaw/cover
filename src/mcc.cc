@@ -231,10 +231,11 @@ struct MCC {
 
         LOG(3) << "After parsing, memory is: " << debug_nodes();
         fclose(f);
-
-        choice = std::vector<size_t>(num_options);
-        ft = std::vector<size_t>(num_options);
-        score = std::vector<size_t>(num_options);
+        
+        int max_levels = num_options + num_items + 1;
+        choice = std::vector<size_t>(max_levels);
+        ft = std::vector<size_t>(max_levels);
+        score = std::vector<size_t>(max_levels);
         colors.resize(color_ids.size() + 1);  // colors are 1-indexed.
         for (const auto& kv : color_ids) { colors[kv.second] = kv.first; }
     }
