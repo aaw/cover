@@ -482,6 +482,7 @@ struct MCC {
         while (true) {
             // M3. [Choose i.]
             size_t i = choose_item(l);
+            CHECK(l < choice.size()) << "Too many levels";
             if (score[l] == 0) {
                 INC(score_zero);
                 if (!backtrack(l, i)) return;
